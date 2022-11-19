@@ -24,6 +24,14 @@ source-repository head
 
 library
   exposed-modules:
+      App.Character
+      App.CharacterGenerator
+      App.GeneratedNames
+      App.InbornPower
+      App.Metal
+      App.MetalbornNames
+      App.Probability
+      App.Utils
       Main
       Prelude
   other-modules:
@@ -37,6 +45,9 @@ library
       UnicodeSyntax
       NoFieldSelectors
       TypeApplications
+      LambdaCase
+      DuplicateRecordFields
+      TupleSections
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       aeson
@@ -45,6 +56,7 @@ library
     , bytestring
     , containers
     , data-default
+    , extra
     , generic-lens
     , hspec
     , hspec-contrib
@@ -53,6 +65,7 @@ library
     , lens
     , lens-aeson
     , mtl
+    , random
     , relude
     , servant
     , servant-client
@@ -65,6 +78,14 @@ library
 executable metalborn-api-exe
   main-is: Main.hs
   other-modules:
+      App.Character
+      App.CharacterGenerator
+      App.GeneratedNames
+      App.InbornPower
+      App.Metal
+      App.MetalbornNames
+      App.Probability
+      App.Utils
       Prelude
       Paths_metalborn_api
   hs-source-dirs:
@@ -76,6 +97,9 @@ executable metalborn-api-exe
       UnicodeSyntax
       NoFieldSelectors
       TypeApplications
+      LambdaCase
+      DuplicateRecordFields
+      TupleSections
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N -fwrite-ide-info
   build-depends:
       aeson
@@ -84,6 +108,7 @@ executable metalborn-api-exe
     , bytestring
     , containers
     , data-default
+    , extra
     , generic-lens
     , hspec
     , hspec-contrib
@@ -93,6 +118,7 @@ executable metalborn-api-exe
     , lens-aeson
     , metalborn-api
     , mtl
+    , random
     , relude
     , servant
     , servant-client
@@ -116,6 +142,9 @@ test-suite metalborn-api-test
       UnicodeSyntax
       NoFieldSelectors
       TypeApplications
+      LambdaCase
+      DuplicateRecordFields
+      TupleSections
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
@@ -124,6 +153,7 @@ test-suite metalborn-api-test
     , bytestring
     , containers
     , data-default
+    , extra
     , generic-lens
     , hspec
     , hspec-contrib
@@ -133,6 +163,7 @@ test-suite metalborn-api-test
     , lens-aeson
     , metalborn-api
     , mtl
+    , random
     , relude
     , servant
     , servant-client

@@ -5,6 +5,7 @@ module Prelude
   , module Data.Eq.Unicode
   , module Data.List.Unicode
   , module Data.Monoid.Unicode
+  , module Data.Ord.Unicode
   , module Relude
   , echo
   ) where
@@ -15,8 +16,10 @@ import Control.Arrow.Unicode
 import Control.Monad.Unicode
 import Data.Bool.Unicode
 import Data.Eq.Unicode
+import Data.Generics.Labels  ()
 import Data.List.Unicode
 import Data.Monoid.Unicode
+import Data.Ord.Unicode
 
 ----------------------------------------------------------------------------------------------------
 

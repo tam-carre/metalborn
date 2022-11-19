@@ -33,6 +33,8 @@ dependencies:
 - data-default
 - base-unicode-symbols
 - generic-lens
+- extra
+- random
 
 default-extensions:
 - ImportQualifiedPost
@@ -41,6 +43,9 @@ default-extensions:
 - UnicodeSyntax
 - NoFieldSelectors
 - TypeApplications
+- LambdaCase
+- DuplicateRecordFields
+- TupleSections
 
 ghc-options:
 - -Wall
