@@ -3203,10 +3203,10 @@
     lhs: pred
     note: "`pred` from `Prelude` is a pure function but it may throw exception. Consider using `prev` from `Relude.Extra.Enum` instead."
     rhs: prev
-- hint:
-    lhs: toEnum
-    note: "`toEnum` from `Prelude` is a pure function but it may throw exception. Consider using `safeToEnum` from `Relude.Extra.Enum` instead."
-    rhs: safeToEnum
+# - hint:
+    # lhs: toEnum
+    # note: "`toEnum` from `Prelude` is a pure function but it may throw exception. Consider using `safeToEnum` from `Relude.Extra.Enum` instead."
+    # rhs: safeToEnum
 - hint:
     lhs: sum xs / length xs
     note: "Use `average` from `Relude.Extra.Foldable`"
@@ -3288,35 +3288,14 @@
     note: "Use `traverseToSnd` from `Relude.Extra.Tuple`"
     rhs: traverseToSnd f a
 - warn:
-    lhs: "DiscordId . Snowflake"
-    rhs: DiscordBot.Guilds.Settings.w64DId
-- warn:
-    lhs: "if p x then a x else pass"
-    rhs: Utils.when' p a x
-- warn:
     lhs: "if x then y else pass"
     rhs: when x y
-- warn:
-    lhs: "changeNotifHistory"
-    rhs: addToHistory
 - warn:
     lhs: "putTextLn"
     rhs: echo
 - warn:
     lhs: "putStrLn"
     rhs: echo
-- warn:
-    lhs: "m <&> (>>= f)"
-    rhs: "m <&>>= f"
-- warn:
-    lhs: "\\t -> l <> t <> r"
-    rhs: "decorate l r"
-- warn:
-    lhs: "void . UnliftIO.Concurrent.forkIO"
-    rhs: "Utils.forkIO_"
-- warn:
-    lhs: "void . Discord.restCall"
-    rhs: "DiscordBot.Internal.restCall_"
 - warn:
     lhs: "not . any f"
     rhs: "Lenses.none f"
@@ -3327,23 +3306,21 @@
     lhs: "y ≫  pure x"
     rhs: "y $> x"
 - warn:
-    lhs: "left toText . eitherDecode"
-    rhs: "App.Utils.decodeE"
+    lhs: "f <$> a <*> pure b"
+    rhs: "f <$> a ?? b"
 - warn:
-    lhs: "left toText $ eitherDecode"
-    rhs: "App.Utils.decodeE"
+    lhs: "traverse (const f) x"
+    note: "use <$"
+    rhs: "sequence $ f <$ x"
 - warn:
-    lhs: "if c then pass else fail e"
-    rhs: "App.Utils.posit c e"
+    lhs: "fmap (const f) x"
+    rhs: "f <$ x"
 - warn:
-    lhs: "if c then pure () else fail e"
-    rhs: "App.Utils.posit c e"
+    lhs: "map (const f) x"
+    rhs: "f <$ x"
 - warn:
-    lhs: "posit c \"\""
-    rhs: "App.Utils.posit' c"
+    lhs: "const f <$> x"
+    rhs: "f <$ x"
 - warn:
-    lhs: "posit c ()"
-    rhs: "App.Utils.posit' c"
-- warn:
-    lhs: "maybeToRight"
-    rhs: "onFail"
+    lhs: "x <&> const f"
+    rhs: "x &> f"

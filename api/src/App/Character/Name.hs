@@ -1,6 +1,17 @@
-module App.GeneratedNames (generatedNames) where
+module App.Character.Name (Name (..)) where
+
+import App.RNG.Rand  (randomEl)
+import System.Random (Random (..))
 
 ----------------------------------------------------------------------------------------------------
+
+newtype Name
+  = Name Text
+  deriving (Eq, Generic, Show)
+
+instance Random Name where
+  random  = randomEl $ Name <$> generatedNames
+  randomR = const random
 
 generatedNames ∷ [Text]
 generatedNames =

@@ -1,46 +1,53 @@
-{-# LANGUAGE AllowAmbiguousTypes, DataKinds, DeriveGeneric, FlexibleContexts,
-             NoMonomorphismRestriction #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 
-module App.Character (Abilities (..), Character (..)) where
+module App.Character (Character (..)) where
 
-import App.InbornPower (InbornAllo, InbornFeru)
-import App.Metal       (Metal)
-import Data.Default    (Default (..))
+import App.Character.Abilities (Abilities)
+import App.Character.Gender    (Gender)
+import App.Character.Name      (Name (..))
+import App.RNG.Rand            (Rand, randomEnum, randomEnumR, toRand)
+import Relude.Unsafe           qualified as Unsafe
+import System.Random           (Random (..), StdGen, mkStdGen)
 
 ----------------------------------------------------------------------------------------------------
 
 data Character
   = Character
     { id        ∷ Text
-    , name      ∷ Text
-    , age       ∷ Int
+    , name      ∷ Name
     , gender    ∷ Gender
-    , species   ∷ Species
     , abilities ∷ Abilities
-    , lore      ∷ CharacterLore
+      -- , abilityExplanation ∷ AbilityExplanation -- not sure if needed, might
+      -- have a 1:1 Abilities → Explanation relation?
+    , backstory ∷ Backstory
     }
 
-data Species = Human | Kandra | Koloss
-
-data Gender = Male | Female | Other
-
-data Abilities
-  = Abilities
-    { inbornA ∷ InbornAllo
-    , inbornF ∷ InbornFeru
-    , spikedA ∷ [Metal]
-    , spikedF ∷ [Metal]
-    , medailA ∷ [Metal]
-    , medailF ∷ [Metal]
-    , grenade ∷ Bool
+data CharacterUserInput
+  = CharacterUserInput
+    { name   ∷ Maybe Name
+    , gender ∷ Maybe Gender
     }
-  deriving (Generic, Show)
 
-instance Default Abilities where
-  def = Abilities def def [] [] [] [] False
+data CharacterInput
+  = CharacterInput
+    { name   ∷ Name
+    , gender ∷ Gender
+    }
 
-data CharacterLore
-  = CharacterLore
+fillCharacterInput ∷ CharacterUserInput → Rand CharacterInput
+fillCharacterInput maybes = CharacterInput <$> toRand maybes.name <*> toRand maybes.gender
+
+-- mkCharacter ∷ CharacterInput → Character
+-- mkCharacter = _
+
+-- | A character's name and gender determine the RNG seed
+seed ∷ Name → Gender → StdGen
+seed (Name name) gender = mkStdGen (nameAsInt + genderAsInt) where
+  nameAsInt   = Unsafe.read . concatMap (show . ord) $ toString name
+  genderAsInt = fromEnum gender
+
+data Backstory
+  = Backstory
     { job                ∷ Job
     , worldhopper        ∷ Bool
     , earlyLife          ∷ EarlyLife

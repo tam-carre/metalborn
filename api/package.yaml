@@ -35,17 +35,19 @@ dependencies:
 - generic-lens
 - extra
 - random
+- QuickCheck
+
+language: GHC2021
 
 default-extensions:
-- ImportQualifiedPost
 - OverloadedStrings
 - OverloadedLabels
 - UnicodeSyntax
 - NoFieldSelectors
-- TypeApplications
 - LambdaCase
 - DuplicateRecordFields
-- TupleSections
+- ViewPatterns
+- BlockArguments
 
 ghc-options:
 - -Wall
@@ -55,7 +57,7 @@ ghc-options:
 - -Wincomplete-uni-patterns
 - -Wmissing-export-lists
 - -Wmissing-home-modules
-- -Wpartial-fields
+  #- -Wpartial-fields
 - -Wredundant-constraints
 
 library:

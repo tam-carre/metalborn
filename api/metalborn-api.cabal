@@ -25,12 +25,13 @@ source-repository head
 library
   exposed-modules:
       App.Character
-      App.CharacterGenerator
-      App.GeneratedNames
-      App.InbornPower
-      App.Metal
-      App.MetalbornNames
-      App.Probability
+      App.Character.Abilities
+      App.Character.Gender
+      App.Character.GenderNeutral
+      App.Character.Metalborn
+      App.Character.Name
+      App.RNG.Probability
+      App.RNG.Rand
       App.Utils
       Main
       Prelude
@@ -39,18 +40,18 @@ library
   hs-source-dirs:
       src
   default-extensions:
-      ImportQualifiedPost
       OverloadedStrings
       OverloadedLabels
       UnicodeSyntax
       NoFieldSelectors
-      TypeApplications
       LambdaCase
       DuplicateRecordFields
-      TupleSections
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+      ViewPatterns
+      BlockArguments
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wredundant-constraints
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , base-noprelude
     , base-unicode-symbols
     , bytestring
@@ -73,36 +74,37 @@ library
     , text
     , time
     , vector
-  default-language: Haskell2010
+  default-language: GHC2021
 
 executable metalborn-api-exe
   main-is: Main.hs
   other-modules:
       App.Character
-      App.CharacterGenerator
-      App.GeneratedNames
-      App.InbornPower
-      App.Metal
-      App.MetalbornNames
-      App.Probability
+      App.Character.Abilities
+      App.Character.Gender
+      App.Character.GenderNeutral
+      App.Character.Metalborn
+      App.Character.Name
+      App.RNG.Probability
+      App.RNG.Rand
       App.Utils
       Prelude
       Paths_metalborn_api
   hs-source-dirs:
       src
   default-extensions:
-      ImportQualifiedPost
       OverloadedStrings
       OverloadedLabels
       UnicodeSyntax
       NoFieldSelectors
-      TypeApplications
       LambdaCase
       DuplicateRecordFields
-      TupleSections
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N -fwrite-ide-info
+      ViewPatterns
+      BlockArguments
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N -fwrite-ide-info
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , base-noprelude
     , base-unicode-symbols
     , bytestring
@@ -126,28 +128,29 @@ executable metalborn-api-exe
     , text
     , time
     , vector
-  default-language: Haskell2010
+  default-language: GHC2021
 
 test-suite metalborn-api-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      AbilitiesSpec
       Paths_metalborn_api
   hs-source-dirs:
       test
   default-extensions:
-      ImportQualifiedPost
       OverloadedStrings
       OverloadedLabels
       UnicodeSyntax
       NoFieldSelectors
-      TypeApplications
       LambdaCase
       DuplicateRecordFields
-      TupleSections
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+      ViewPatterns
+      BlockArguments
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , base-noprelude
     , base-unicode-symbols
     , bytestring
@@ -171,4 +174,4 @@ test-suite metalborn-api-test
     , text
     , time
     , vector
-  default-language: Haskell2010
+  default-language: GHC2021
