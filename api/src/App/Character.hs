@@ -3,7 +3,7 @@
 module App.Character (Character (..)) where
 
 import App.Character.Abilities (Abilities)
-import App.Character.Gender    (Gender)
+import App.Gender    (Gender)
 import App.Character.Name      (Name (..))
 import App.RNG.Rand            (Rand, randomEnum, randomEnumR, toRand)
 import Relude.Unsafe           qualified as Unsafe

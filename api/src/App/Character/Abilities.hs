@@ -1,20 +1,17 @@
-{-# LANGUAGE NoMonomorphismRestriction, OverloadedRecordDot #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 
-module App.Character.Abilities (Abilities (..), AbilityProbabilities (..), mkAbilities) where
+module App.Character.Abilities
+  ( Abilities (..)
+  , AbilitiesObtained
+  , AbilityProbabilities (..)
+  , mkAbilities
+  ) where
 
-import App.Character.Gender        (Gender (..))
-import App.Character.GenderNeutral (txt)
-import App.Character.Metalborn     (Halfborn (..), Metal, Metalborn (..), Singleborn (..),
-                                    mkTwinborn)
-import App.Character.Name          (Name)
-import App.RNG.Probability         (Probability)
-import App.RNG.Rand                (Rand, coinflip, exponentiallyRarer, rand, randBool, randomEnum,
-                                    randomEnumR, randomlySplit)
-import App.Utils                   (justIf, pp)
-import Control.Lens                ((.~), (^.))
-import Data.Default                (Default (..))
-import Relude.Extra.Newtype        (un)
-import System.Random               (Random (..))
+import App.Character.Metalborn (Halfborn (..), Metal, Metalborn (..), Singleborn (..), mkTwinborn)
+import App.RNG.Probability     (Probability)
+import App.RNG.Rand            (Rand, coinflip, exponentiallyRarer, rand, randBool, randomlySplit)
+import App.Utils               (justIf)
+import Data.Default            (Default (..))
 
 ----------------------------------------------------------------------------------------------------
 
@@ -96,27 +93,3 @@ mkAbilitiesObtained ps = do
   (medailA, medailF) ← randomlySplit medails
 
   pure $ AbilitiesObtained { spikedA, spikedF, medailA, medailF, grenade }
-
-----------------------------------------------------------------------------------------------------
--- Description
-
--- sentence ∷ ( → ) →
--- sentence builder =
-
--- describeAbilities ∷ Name → Gender → Abilities → Text
--- describeAbilities name gender abilities =
-  -- let x = name & unInborn
-  -- in
-  -- case metalbornKinds abilities.inbornA abilities.inbornF of
-    -- Nothing → txt ( name ^. un ) ⊕ "doesn't have any inborn affinity with the Metallic Arts."
-
--- primaryTitles
-  -- ∷ (MetalbornAndReason, MetalbornAndReason, MetalbornAndReason)
-  -- → [Metalborn]
--- primaryTitles = \case
-  -- (Just a, Nothing, Nothing) → [a.name]
-  -- (Nothing, Just f, Nothing) → [f.name]
-  -- (Nothing, Nothing, Just t) → [] -- illogical state
-
--- my_foldr ∷ (a → b → b) → b → [a] → b
--- my_foldr = _

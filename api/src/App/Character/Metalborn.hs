@@ -1,5 +1,6 @@
 module App.Character.Metalborn
   ( Ferring (..)
+  , FeruchemicalAttribute (..)
   , Halfborn (..)
   , Metal (..)
   , Metalborn (..)
@@ -7,12 +8,14 @@ module App.Character.Metalborn
   , Singleborn (..)
   , Twinborn (..)
   , ferringMetal
+  , feruchemicalAttribute
   , mistingMetal
   , mkTwinborn
   , singlebornMetal
   ) where
 
 import App.RNG.Rand  (randomEnum, randomEnumR)
+import Prelude       hiding (Identity)
 import System.Random (Random (..))
 
 ----------------------------------------------------------------------------------------------------
@@ -60,7 +63,7 @@ instance Random Misting where
   randomR = randomEnumR
   random  = randomEnum
 
-data Ferring = Skimmer | Steelrunner | Sparker | Firesoul | Windwhisper | Brute | Archivist | Sentry | Spinner | Soulbearer | Gasper | Subsumer | Trueself | Connector | Bloodmaker | Pinnacle deriving
+data Ferring = Skimmer | Steelrunner | Sparker | Firesoul | Windwhisperer | Brute | Archivist | Sentry | Spinner | Soulbearer | Gasper | Subsumer | Trueself | Connector | Bloodmaker | Pinnacle deriving
   ( Bounded
   , Enum
   , Eq
@@ -75,6 +78,12 @@ instance Random Ferring where
 
 -- https://www.17thshard.com/forum/topic/97725-twinborn-names/
 data Twinborn = EagleEye | Catcher | Monitor | Quickwit | Keeneye | Hefter | Sprinter | Sooner | Scrapper | Bruteblood | Marathoner | Scaler | Deader | Guardian | Navigator | Stalwart | Sharpshooter | Crasher | Swift | Shroud | Bigshot | Luckshot | Cloudtoucher | Copperkeep | Boiler | Ghostwalker | Shelter | Masker | Sentinel | Hazedodger | Metalmapper | Sleepless | Pulsewise | Stalker | Strongarm | Mastermind | Loudmouth | Zealot | Highroller | Instigator | Schemer | Cooler | Icon | Pacifier | Slick | Resolute | Puremind | Friendly | Metalbreaker | Ringer | Sapper | Gulper | Booster | BurstTicker | Enabler | Soulburst | Cohort | Chronicler | Vessel | Timeless | Introspect | Whimflitter | Foresight | Flicker | Charmed | Visionary | Plotter | Yearspanner | Chrysalis | Spotter | Blur | Assessor | Flashwit | Monument | Constant | Transcendent | Sated deriving
+  ( Eq
+  , Generic
+  , Show
+  )
+
+data FeruchemicalAttribute = Weight | PhysicalSpeed | MentalSpeed | Warmth | Senses | Strength | Memories | Wakefulness | Fortune | Investiture | Breath | Energy | Identity | Connection | Health | Determination deriving
   ( Eq
   , Generic
   , Show
@@ -109,26 +118,45 @@ mistingMetal = \case
 
 ferringMetal ∷ Ferring → Metal
 ferringMetal = \case
-  Steelrunner → Steel
-  Skimmer     → Iron
-  Sparker     → Zinc
-  Firesoul    → Brass
-  Windwhisper → Tin
-  Brute       → Pewter
-  Archivist   → Copper
-  Sentry      → Bronze
-  Spinner     → Chromium
-  Connector   → Duralumin
-  Soulbearer  → Nicrosil
-  Gasper      → Cadmium
-  Subsumer    → Bendalloy
-  Trueself    → Aluminum
-  Bloodmaker  → Gold
-  Pinnacle    → Electrum
+  Steelrunner   → Steel
+  Skimmer       → Iron
+  Sparker       → Zinc
+  Firesoul      → Brass
+  Windwhisperer → Tin
+  Brute         → Pewter
+  Archivist     → Copper
+  Sentry        → Bronze
+  Spinner       → Chromium
+  Connector     → Duralumin
+  Soulbearer    → Nicrosil
+  Gasper        → Cadmium
+  Subsumer      → Bendalloy
+  Trueself      → Aluminum
+  Bloodmaker    → Gold
+  Pinnacle      → Electrum
+
+feruchemicalAttribute ∷ Metal → FeruchemicalAttribute
+feruchemicalAttribute = \case
+  Iron      → Weight
+  Steel     → PhysicalSpeed
+  Zinc      → MentalSpeed
+  Brass     → Warmth
+  Tin       → Senses
+  Pewter    → Strength
+  Copper    → Memories
+  Bronze    → Wakefulness
+  Chromium  → Fortune
+  Nicrosil  → Investiture
+  Cadmium   → Breath
+  Bendalloy → Energy
+  Aluminum  → Identity
+  Duralumin → Connection
+  Gold      → Health
+  Electrum  → Determination
 
 twinborn ∷ Misting → Ferring → Maybe Twinborn
 twinborn misting ferring = case (misting, ferring) of
-  (Tineye, Windwhisper)      → Just EagleEye
+  (Tineye, Windwhisperer)    → Just EagleEye
   (Tineye, Steelrunner)      → Just Catcher
   (Tineye, Archivist)        → Just Monitor
   (Tineye, Sparker)          → Just Quickwit
@@ -144,7 +172,7 @@ twinborn misting ferring = case (misting, ferring) of
   (Lurcher, Steelrunner)     → Just Guardian
   (Lurcher, Sparker)         → Just Navigator
   (Lurcher, Bloodmaker)      → Just Stalwart
-  (Coinshot, Windwhisper)    → Just Sharpshooter
+  (Coinshot, Windwhisperer)  → Just Sharpshooter
   (Coinshot, Skimmer)        → Just Crasher
   (Coinshot, Steelrunner)    → Just Swift
   (Coinshot, Trueself)       → Just Shroud
@@ -157,7 +185,7 @@ twinborn misting ferring = case (misting, ferring) of
   (Smoker, Trueself)         → Just Ghostwalker
   (Smoker, Connector)        → Just Shelter
   (Smoker, Spinner)          → Just Masker
-  (Seeker, Windwhisper)      → Just Sentinel
+  (Seeker, Windwhisperer)    → Just Sentinel
   (Seeker, Steelrunner)      → Just Hazedodger
   (Seeker, Archivist)        → Just Metalmapper
   (Seeker, Sentry)           → Just Sleepless
@@ -198,7 +226,7 @@ twinborn misting ferring = case (misting, ferring) of
   (Pulser, Sentry)           → Just Plotter
   (Pulser, Bloodmaker)       → Just Yearspanner
   (Pulser, Gasper)           → Just Chrysalis
-  (Slider, Windwhisper)      → Just Spotter
+  (Slider, Windwhisperer)    → Just Spotter
   (Slider, Steelrunner)      → Just Blur
   (Slider, Archivist)        → Just Assessor
   (Slider, Sparker)          → Just Flashwit

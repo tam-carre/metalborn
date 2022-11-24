@@ -8,6 +8,7 @@ module App.RNG.Rand
   , exponentiallyRarer
   , rand
   , randBool
+  , randEl
   , randR
   , randomEl
   , randomEnum
@@ -37,6 +38,9 @@ randR = state . randomR
 
 randBool ∷ Probability → Rand Bool
 randBool (unProb → p) = rand @Float <&> (≤ p)
+
+randEl ∷ [a] → Rand a
+randEl = state . randomEl
 
 coinflip ∷ a → a → Rand a
 coinflip a b = bool a b <$> randBool balanced

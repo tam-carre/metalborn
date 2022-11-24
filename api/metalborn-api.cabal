@@ -26,10 +26,10 @@ library
   exposed-modules:
       App.Character
       App.Character.Abilities
-      App.Character.Gender
-      App.Character.GenderNeutral
+      App.Character.Description
       App.Character.Metalborn
       App.Character.Name
+      App.Gender
       App.RNG.Probability
       App.RNG.Rand
       App.Utils
@@ -81,10 +81,10 @@ executable metalborn-api-exe
   other-modules:
       App.Character
       App.Character.Abilities
-      App.Character.Gender
-      App.Character.GenderNeutral
+      App.Character.Description
       App.Character.Metalborn
       App.Character.Name
+      App.Gender
       App.RNG.Probability
       App.RNG.Rand
       App.Utils
