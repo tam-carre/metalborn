@@ -10,8 +10,6 @@ module Prelude
   , echo
   ) where
 
-import Relude hiding (id)
-
 import Control.Arrow.Unicode
 import Control.Monad.Unicode
 import Data.Bool.Unicode
@@ -20,6 +18,7 @@ import Data.Generics.Labels  ()
 import Data.List.Unicode
 import Data.Monoid.Unicode
 import Data.Ord.Unicode
+import Relude
 
 ----------------------------------------------------------------------------------------------------
 

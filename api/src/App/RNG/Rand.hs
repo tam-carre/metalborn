@@ -19,7 +19,7 @@ module App.RNG.Rand
 
 import App.RNG.Probability (Probability, balanced, unProb)
 import Control.Lens        (Field1 (_1), both, (%~))
-import Relude.Unsafe       ((!!))
+import Data.List.NonEmpty  qualified as NE
 import System.Random       (Random (random, randomR), RandomGen, StdGen)
 
 ----------------------------------------------------------------------------------------------------
@@ -39,7 +39,7 @@ randR = state . randomR
 randBool ∷ Probability → Rand Bool
 randBool (unProb → p) = rand @Float <&> (≤ p)
 
-randEl ∷ [a] → Rand a
+randEl ∷ NonEmpty a → Rand a
 randEl = state . randomEl
 
 coinflip ∷ a → a → Rand a
@@ -54,8 +54,8 @@ exponentiallyRarer prob = randBool prob ≫= \case
 randomlySplit ∷ [a] → Rand ([a], [a])
 randomlySplit xs = splitAt <$> randR (0, length xs) ?? xs
 
-randomEl ∷ RandomGen g ⇒ [a] → StockRandom g a
-randomEl xs = randomR (0, length xs) ⋙ _1 %~ (xs !!)
+randomEl ∷ RandomGen g ⇒ NonEmpty a → StockRandom g a
+randomEl xs = randomR (0, length xs) ⋙ _1 %~ (xs NE.!!)
 
 randomEnum ∷ ∀ a g . (Enum a, Bounded a, RandomGen g) ⇒ StockRandom g a
 randomEnum = randomR bounds ⋙ _1 %~ toEnum where
