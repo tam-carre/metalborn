@@ -156,6 +156,9 @@ feruchemicalAttribute = \case
 
 twinborn ∷ Misting → Ferring → Maybe Twinborn
 twinborn misting ferring = case (misting, ferring) of
+  -- Mistborn Adventure Game names
+  -- (I tried to remove those that I do not understand or that seem to assume non-canon
+  -- properties of Identity, Fortune etc...)
   (Tineye, Windwhisperer)    → Just EagleEye
   (Tineye, Steelrunner)      → Just Catcher
   (Tineye, Archivist)        → Just Monitor

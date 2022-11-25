@@ -36,6 +36,10 @@ dependencies:
 - extra
 - random
 - QuickCheck
+- opaleye
+- product-profunctors
+- profunctors
+- postgresql-simple
 
 language: GHC2021
 

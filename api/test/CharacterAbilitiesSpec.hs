@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds, OverloadedRecordDot #-}
 
-module AbilitiesSpec (spec) where
+module CharacterAbilitiesSpec (spec) where
 
 import App.Character.Abilities (Abilities (..), AbilityProbabilities (..), mkAbilities)
 import App.Character.Metalborn (Halfborn (..), Metal, Metalborn (..))
@@ -27,13 +27,13 @@ spec = do
          in out ∈ [lo..hi]
       withAtLeastOne mapper    = filter (not . null) $ map mapper outs
       spikesOut                = withAtLeastOne spikes
-      medailOut                = withAtLeastOne medails
+      medallOut                = withAtLeastOne medalls
       outsWithAtLeastOneSpike  = length spikesOut
-      outsWithAtLeastOneMedail = length medailOut
+      outsWithAtLeastOneMedall = length medallOut
       outsMetalborn            = length $ filter isMetalborn outs
       outsTwinborn             = length $ filter isTwinborn outs
       spikesMetalsGrouped      = group . sort . join $ spikesOut
-      medailMetalsGrouped      = group . sort . join $ medailOut
+      medallMetalsGrouped      = group . sort . join $ medallOut
       outsWithGrenade          = length $ filter (^. position @2 . #grenade) outs
 
   it "should produce expected proportion of metalborn" $ do
@@ -48,22 +48,22 @@ spec = do
         outsWithAtLeastTwoSpikes = length . filter ((2 ≤) . length) $ map spikes outs
     withinMOE twoSpikeProb outsWithAtLeastTwoSpikes `shouldBe` True
 
-  it "should produce expected proportion of medaillions" $ do
-    withinMOE probs.medail outsWithAtLeastOneMedail `shouldBe` True
-    let twoMedailProb = probs.medail * probs.medail
-        outsWithAtLeastTwoMedail = length . filter ((2 ≤) . length) $ map medails outs
-    withinMOE twoMedailProb outsWithAtLeastTwoMedail `shouldBe` True
+  it "should produce expected proportion of medalllions" $ do
+    withinMOE probs.medall outsWithAtLeastOneMedall `shouldBe` True
+    let twoMedallProb = probs.medall * probs.medall
+        outsWithAtLeastTwoMedall = length . filter ((2 ≤) . length) $ map medalls outs
+    withinMOE twoMedallProb outsWithAtLeastTwoMedall `shouldBe` True
 
   it "should produce expected proportion of grenade users" $ do
     withinMOE probs.grenade outsWithGrenade `shouldBe` True
 
   it "should produce all 16 metals" $ do
     length spikesMetalsGrouped `shouldBe` 16
-    length medailMetalsGrouped `shouldBe` 16
+    length medallMetalsGrouped `shouldBe` 16
 
   it "should use the specified probabilities" $ do
     all (withinMOE (0.0625 * probs.spike) . length) spikesMetalsGrouped `shouldBe` True
-    all (withinMOE (0.0625 * probs.medail) . length) medailMetalsGrouped `shouldBe` True
+    all (withinMOE (0.0625 * probs.medall) . length) medallMetalsGrouped `shouldBe` True
 
     True `shouldBe` True
 
@@ -81,5 +81,5 @@ isTwinborn (Abilities mb _) = case mb of
 spikes ∷ Abilities → [Metal]
 spikes (Abilities _ o) = (o ^. #spikedA) ++ (o ^. #spikedF)
 
-medails ∷ Abilities → [Metal]
-medails (Abilities _ o) = (o ^. #medailA) ++ (o ^. #medailF)
+medalls ∷ Abilities → [Metal]
+medalls (Abilities _ o) = (o ^. #medallA) ++ (o ^. #medallF)

@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedLists #-}
+
 module App.Character.Name (Name (..)) where
 
 import App.RNG.Rand  (randomEl)

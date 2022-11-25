@@ -1,106 +1,183 @@
-module App.Character.Description (describeAbilities) where
+{-# LANGUAGE OverloadedLists #-}
 
-import App.Character.Abilities (Abilities (Abilities), AbilitiesObtained)
+module App.Character.Description (DescriptionBlock (..), describeAbilities) where
+
+import App.Character.Abilities (Abilities (Abilities), AbilitiesObtained (AbilitiesObtained))
 import App.Character.Metalborn (Ferring (..), Halfborn (..), Metal, Metalborn (..), Misting (..),
                                 Singleborn (..), Twinborn (..), ferringMetal, feruchemicalAttribute,
                                 mistingMetal)
 import App.Character.Name      (Name (..))
-import App.Gender              (Gender, GenderNeutral, applyGender, are, their, them, themselves,
+import App.Gender              (Gender (Male), GenderNeutral, applyGender, their, them, themselves,
                                 they, txt, uncapitalize, were)
 import App.RNG.Rand            (Rand, randEl)
 import App.Utils               (pp)
+import Data.List               (singleton)
+import Relude.Unsafe           qualified as Unsafe
 
 ----------------------------------------------------------------------------------------------------
 
-describeAbilities ∷ Name → Gender → Abilities → Rand Text
+data DescriptionBlock
+  = AllomancyBlock Text
+  | FeruchemyBlock Text
+  | TwinbornBlock Text
+  | SpikesBlock Text
+  | MedallionBlock Text
+  | GrenadeBlock Text
+  deriving (Eq, Generic, Show)
+
+describeAbilities ∷ Name → Gender → Abilities → Rand [DescriptionBlock]
 describeAbilities name gender (Abilities inborn obtained) = do
-  inbornDesc   ← inbornBreakdown name inborn
-  obtainedDesc ← obtainedBreakdown name obtained
-  pure . applyGender gender $ inbornDesc ⊕ "\n\n" ⊕ obtainedDesc
+  inbornDesc   ← inbornBreakdown name gender inborn
+  obtainedDesc ← obtainedBreakdown name gender obtained
+  pure (inbornDesc ++ obtainedDesc)
 
--- TODO
-obtainedBreakdown ∷ Name → AbilitiesObtained → Rand GenderNeutral
-obtainedBreakdown name obtained = undefined
+inbornBreakdown ∷ Name → Gender → Maybe Metalborn → Rand [DescriptionBlock]
+inbornBreakdown (Name (txt → name)) gender mb =
+  let single a = singleton . a . applyGender gender
+      allo = single AllomancyBlock
+      feru = single FeruchemyBlock
+      mistborn fe = mistbornDesc name fe <&> (\(a, f) → allo a ++ maybe [] feru f)
+      feruc fe = feruchemistDesc name fe <&> (\(a, f) → feru a ++ maybe [] allo f)
+   in case mb of
+    Nothing                                    → allo <$> noAbilityDesc name
+    Just (Singleborn (Misting misting))        → allo <$> mistingDesc name misting
+    Just (Singleborn (Ferring ferring))        → feru <$> ferringDesc name ferring
+    Just (Halfborn (Mistborn maybeFerring))    → mistborn maybeFerring
+    Just (Halfborn (Feruchemist maybeMisting)) → feruc maybeMisting
+    Just Fullborn                              → allo <$> fullbornDesc name
+    Just (Twinborn mist ferr twin')            → twinbornDesc name gender mist ferr twin'
 
-inbornBreakdown ∷ Name → Maybe Metalborn → Rand GenderNeutral
-inbornBreakdown (Name (txt → name)) = \case
-  Nothing                                    → noAbilityDesc name
-  Just (Singleborn (Misting misting))        → mistingDesc name misting
-  Just (Singleborn (Ferring ferring))        → ferringDesc name ferring
-  Just (Halfborn (Mistborn maybeFerring))    → mistbornDesc name maybeFerring
-  Just (Halfborn (Feruchemist maybeMisting)) → feruchemistDesc name maybeMisting
-  Just Fullborn                              → fullbornDesc name
-  Just (Twinborn mist ferr twin)             → twinbornDesc name mist ferr twin
+obtainedBreakdown ∷ Name → Gender → AbilitiesObtained → Rand [DescriptionBlock]
+obtainedBreakdown (Name (txt → name)) gender (AbilitiesObtained spkA spkF mdlA mdlF grn) = do
+  spkReason ← randEl
+                [ name ⊕ ", after defeating Hemalurgists, came into possession of"
+                , name ⊕ " was entrusted by Harmony with"
+                , name ⊕ " acquired in mysterious circumstances"
+                ]
+  mdlReason ← randEl
+                [ name ⊕ ", after a battle with Southern Scadrian criminals, acquired"
+                , name ⊕ " was entrusted by the Sovereign with"
+                , name ⊕ " acquired in mysterious circumstances"
+                ]
+  grnExpl   ← randEl
+                [ name ⊕ " owns a South Scadrian Allomantic Grenade, which can be charged with Allomantic or Feruchemical power and thrown for remote activation."
+                ]
+  let expl ∷ GenderNeutral → GenderNeutral → Int → [Metal] → [Metal] → GenderNeutral
+      expl thing reason num a f =
+        reason ⊕ " **" ⊕ show num ⊕ " " ⊕ thing ⊕ (if num > 1 then "s" else "") ⊕ "**, "
+        ⊕ (case (null a, null f) of
+             (False, False) → access ⊕ "Allomantic " ⊕ oxford (map show a)
+                            ⊕ ", as well as Feruchemical " ⊕ oxford (map show f) ⊕ "."
+             (False, True)  → access ⊕ "Allomantic " ⊕ oxford (map show a) ⊕ "."
+             (True, False)  → access ⊕ "Feruchemical " ⊕ oxford (map show f) ⊕ "."
+             (True, True)   → ""
+          )
+      access  = "granting " ⊕ them ⊕ " access to, or a boost of power in, "
+      spkNum  = length (spkA ++ spkF)
+      spkExpl = expl "Hemalurgic spike" spkReason spkNum spkA spkF
+      mdlNum  = length (mdlA ++ mdlF)
+      mdlExpl = expl "Southern Medallion" mdlReason mdlNum mdlA mdlF
+
+  pure $ [SpikesBlock    (applyGender gender spkExpl) | spkNum ≢ 0]
+       ⊕ [MedallionBlock (applyGender gender mdlExpl) | mdlNum ≢ 0]
+       ⊕ [GrenadeBlock   (applyGender gender grnExpl) | grn]
 
 mistingDesc ∷ GenderNeutral → Misting → Rand GenderNeutral
 mistingDesc name misting = do
   basic ← basicDesc name (ppGn misting) (ppGn $ mistingMetal misting) "Allomantic"
-  pure $ basic ⊕ "\n\n" ⊕ txt (mistingDetails misting)
+  pure $ basic ⊕ " " ⊕ txt (mistingDetails misting)
 
 ferringDesc ∷ GenderNeutral → Ferring → Rand GenderNeutral
 ferringDesc name ferring = do
   basic ← basicDesc name (ppGn ferring) (ppGn $ ferringMetal ferring) "Feruchemical"
-  pure $ basic ⊕ "\n\n" ⊕ txt (ferringDetails ferring)
+  pure $ basic ⊕ " " ⊕ txt (ferringDetails ferring)
 
-twinbornDesc ∷ GenderNeutral → Misting → Ferring → Maybe Twinborn → Rand GenderNeutral
-twinbornDesc name mist ferr twin = do
+twinbornDesc ∷ GenderNeutral → Gender → Misting → Ferring → Maybe Twinborn → Rand [DescriptionBlock]
+twinbornDesc name gender mist ferr twin = do
+  let single a = a . applyGender gender
   connector ← randEl ["Furthermore", "Moreover", "Additionally", "In addition"]
-  mDesc ← mistingDesc name mist
-  fDesc ← uncapitalize <$> ferringDesc name ferr
-  pure $ mDesc ⊕ " " ⊕ connector ⊕ ", " ⊕ fDesc ⊕ "\n\n"
-    ⊕ ( case twin of
-        Nothing →
-         "Some claim all Twinborn combinations have a unique name. However, they are not as well known due to the rarity of Twinborn individuals. " ⊕ name ⊕ "'s powers are rare, and **there is no common name for " ⊕ their ⊕ " specific combination of Metallic Arts**."
-        Just Crasher →
-         "As a Coinshot and a Skimmer, " ⊕ name ⊕ " is said to be a **Crasher**. " ⊕ they ⊕ " have the same powerful abilities as Waxillium Ladrian."
-        Just twinName →
-          "Some call the combination of a " ⊕ ppGn mist ⊕ " and " ⊕ ppGn ferr ⊕ " a **" ⊕ ppGn twinName ⊕ "**. Twinborn combination names are not very well known due to the rarity of Twinborn individuals."
-      )
-    ⊕  "\n\nTwinborn combinations are known to cause the emergence of completely new effects which are not well documented. It is speculated that Waxillium Ladrian's unique ability to create a defensive Steel bubble is granted by his Crasher powers."
-    ⊕ if mistingMetal mist ≡ ferringMetal ferr
-        then "\n\n" ⊕ compounderAnecdote name (mistingMetal mist)
-        else ""
-    ⊕ case comboAnecdote mist ferr of
-        Nothing       → ""
-        Just anecdote → "\n\n" ⊕ anecdote
+  mDesc ← single AllomancyBlock <$> mistingDesc name mist
+  fDesc ← single FeruchemyBlock
+            <$> ((\t → connector ⊕ ", " ⊕ t) . uncapitalize <$> ferringDesc name ferr)
+  pure
+    [ mDesc
+    , fDesc
+    , single TwinbornBlock $
+        ( case twin of
+          Nothing →
+           name ⊕ "'s Twinborn combination is rare, and there is no common name for it."
+          Just Crasher →
+           "As a Coinshot and a Skimmer, " ⊕ name ⊕ " is said to be a **Crasher**. " ⊕ they ⊕ " have the same powerful abilities as Waxillium Ladrian."
+          Just twinName →
+            "Some call the combination of a " ⊕ ppGn mist ⊕ " and " ⊕ ppGn ferr ⊕ " a **" ⊕ ppGn twinName ⊕ "**."
+        )
+      ⊕ (if mistingMetal mist ≡ ferringMetal ferr
+          then " " ⊕ compounderAnecdote name (mistingMetal mist)
+          else ""
+        )
+      ⊕ (case comboAnecdote mist ferr of
+          Nothing       → ""
+          Just anecdote → " " ⊕ anecdote
+        )
+      ⊕  " Twinborn combinations create subtle new effects which are not well known at this time."
+    ]
 
--- TODO: Create random anecdotes as to how legendary powers were obtained.
-mistbornDesc ∷ GenderNeutral → Maybe Ferring → Rand GenderNeutral
+mistbornDesc ∷ GenderNeutral → Maybe Ferring → Rand (GenderNeutral, Maybe GenderNeutral)
 mistbornDesc name ferr = do
   ferrInfo ← case ferr of
-     Nothing → pure ""
-     Just f  → do
+     Nothing → pure Nothing
+     Just f → do
        ferrDesc ← ferringDesc name f
-       pure $
-        "Additionally, " ⊕ name ⊕ " is a Ferring. "<> ferrDesc
-          ⊕ "\n\n" ⊕ compounderAnecdote name (ferringMetal f)
-  pure $ name ⊕ "is a Mistborn able to burn all Allomantic metals. How " ⊕ name ⊕ " was able to obtain this power of legends is a story one can only hear from " ⊕ themselves ⊕ "." ⊕ ferrInfo
+       pure . Just $ "Additionally, " ⊕ name ⊕ " is a Ferring. " ⊕ ferrDesc
+                   ⊕ "\n\n" ⊕ compounderAnecdote name (ferringMetal f)
+  reasonForBeingMistborn ← randEl
+    [ " How " ⊕ name ⊕ " was able to obtain this power of legends is a story one can only hear from " ⊕ themselves ⊕ "."
+    , " " ⊕ name ⊕ " has become a Mistborn through unexpected circumstances on a mission to protect Scadrial's Perpendicularity from offworld invaders."
+    , " " ⊕ name ⊕ " was bestowed one of the last remaining beads of Lerasium by Harmony's agents to fight a deadly threat from offworld."
+    , " " ⊕ name ⊕ " is the first known natural Mistborn in centuries, a descendent of the Lord Mistborn himself."
+    ]
+  pure
+    ( "**" ⊕ name ⊕ "** is a Mistborn able to burn all Allomantic metals." ⊕ reasonForBeingMistborn
+    , ferrInfo
+    )
 
-feruchemistDesc ∷ GenderNeutral → Maybe Misting → Rand GenderNeutral
+feruchemistDesc ∷ GenderNeutral → Maybe Misting → Rand (GenderNeutral, Maybe GenderNeutral)
 feruchemistDesc name mist = do
   mistInfo ← case mist of
-     Nothing → pure ""
-     Just m  → do
-       mistDesc ← mistingDesc name m
-       pure $
-        "Additionally, " ⊕ name ⊕ " is a Misting. "<> mistDesc
-          ⊕ "\n\n" ⊕ compounderAnecdote name (mistingMetal m)
-  pure $ name ⊕ "is a Feruchemist able to store all Feruchemical attributes. How " ⊕ name ⊕ " was able to obtain this power of legends is a story one can only hear from " ⊕ themselves ⊕ "." ⊕ mistInfo
+    Nothing → pure Nothing
+    Just m → do
+     mistDesc ← mistingDesc name m
+     pure . Just $ "Additionally, " ⊕ name ⊕ " is a Misting. "<> mistDesc
+                 ⊕ "\n\n" ⊕ compounderAnecdote name (mistingMetal m)
+  reasonForBeingFeruchemist ← randEl
+    [ " How " ⊕ name ⊕ " was able to obtain this power of legends is a story one can only hear from " ⊕ themselves ⊕ "."
+    , " " ⊕ name ⊕ " has become a Feruchemist through unexpected circumstances on a mission to protect Scadrial's Perpendicularity from offworld invaders."
+    , " Harmony was able to exceptionally bestow Feruchemical abilities to " ⊕ name ⊕ " for a critical offworld mission, thanks to " ⊕ name ⊕ "'s unique religious fervor."
+    , " " ⊕ name ⊕ " is the first known natural Feruchemist in centuries, descendent of a reclusive Terris community in the Northern Roughs."
+    ]
+  pure
+    ( "**" ⊕ name ⊕ "** is a Feruchemist. " ⊕ they ⊕ " can store all Feruchemical attributes." ⊕ reasonForBeingFeruchemist
+    , mistInfo
+    )
 
 fullbornDesc ∷ GenderNeutral → Rand GenderNeutral
 fullbornDesc name =
-  pure $ name ⊕ "is both a Mistborn and a Feruchemist, able to burn all Allomantic metals and store all Feruchemical attributes. How " ⊕ name ⊕ " was able to obtain this power of legends is a story one can only hear from " ⊕ themselves ⊕ ". " ⊕ they ⊕ " " ⊕ are ⊕ " considered by those who know of " ⊕ their ⊕ " abilities as one of the most powerful Invested humans in the Cosmere."
+  pure $ "**" ⊕ name ⊕ "** is both a Mistborn and a Feruchemist, able to burn all Allomantic metals and store all Feruchemical attributes. How " ⊕ name ⊕ " was able to obtain these powers of legends, held by only the Lord Ruler before, is a story one can only hear from " ⊕ themselves ⊕ ". Those who know of " ⊕ their ⊕ " abilities consider " ⊕ them ⊕ " one of the most powerful humans in the Cosmere."
 
 compounderAnecdote ∷ GenderNeutral → Metal → GenderNeutral
 compounderAnecdote name metal =
-  name ⊕ " has access to virtually unlimited Feruchemical " ⊕ ppGn (feruchemicalAttribute metal) ⊕ " power via a technique known as Compounding. "
+  name ⊕ " can access unlimited Feruchemical " ⊕ ppGn (feruchemicalAttribute metal) ⊕ " via **Compounding**."
 
 basicDesc ∷ GenderNeutral → GenderNeutral → GenderNeutral → GenderNeutral → Rand GenderNeutral
 basicDesc name singlebornKind metal metallicKind = randEl
-  [ "**" ⊕ name ⊕ "** is a **" ⊕ singlebornKind ⊕ "**: " ⊕ they ⊕ " can use " ⊕ metallicKind ⊕ " **" ⊕ metal ⊕ "**."
-  , "As a **" ⊕  singlebornKind ⊕ "**, **" ⊕ name ⊕ "**can use " ⊕ metallicKind ⊕ " **" ⊕ metal ⊕ "**."
-  , "**" ⊕ name ⊕ "** can use " ⊕ metallicKind ⊕ " **" ⊕ metal ⊕ "**, making " ⊕ them ⊕ " a **" ⊕ singlebornKind ⊕ "**."
+  [ "**" ⊕ name ⊕ "** is a" ⊕ maybeN ⊕ " **" ⊕ singlebornKind ⊕ "**: " ⊕ they ⊕ " can use " ⊕ metallicKind ⊕ " **" ⊕ metal ⊕ "**."
+  , "As a" ⊕ maybeN ⊕ " **" ⊕  singlebornKind ⊕ "**, **" ⊕ name ⊕ "** can use " ⊕ metallicKind ⊕ " **" ⊕ metal ⊕ "**."
+  , "**" ⊕ name ⊕ "** can use " ⊕ metallicKind ⊕ " **" ⊕ metal ⊕ "**, making " ⊕ them ⊕ " a" ⊕ maybeN ⊕ " **" ⊕ singlebornKind ⊕ "**."
   ]
+  where
+  maybeN = if (∈ "aeioAEIO") . Unsafe.head . toString $ applyGender Male singlebornKind
+              then "n"
+              else ""
 
 noAbilityDesc ∷ GenderNeutral → Rand GenderNeutral
 noAbilityDesc name = randEl
@@ -123,7 +200,7 @@ mistingDetails = \case
   Tineye →
     "**Tineyes** can increase the sensitivity of their senses. Flaring Tin causes a huge burst of sensory input clearing the Tineye's pain or exhaustion."
   Smoker →
-    "**Smokers** can protect nearby cers from being detected by Seekers (Bronze Allomancers). In addition, a Smoker is immune to emotional Allomancy while burning Copper. It is said to be possible for Smokers to shield others from emotional Allomancy, but the requirements to achieve this feat are not well known."
+    "**Smokers** can protect nearby Allomancers from being detected by Seekers (Bronze Allomancers). In addition, a Smoker is immune to emotional Allomancy while burning Copper. It is said to be possible for Smokers to shield others from emotional Allomancy, but the requirements to achieve this feat are not well known."
   Seeker →
     "**Seekers** are able to detect nearby use of Allomancy."
   DuraluminGnat →
@@ -137,7 +214,7 @@ mistingDetails = \case
   Nicroburst →
     "A **Nicrobust** burning Nicrosil while touching another Allomancer will cause the latter's reserves of currently-burning metals to be expended all at once in a huge burst of power. This can be used on both allies and foes depending on the situation."
   Leecher →
-    "Any Allomancers touched by a **Leecher** burning Chromium will immediately lose th metal reserves."
+    "Any Allomancers touched by a **Leecher** burning Chromium will immediately lose their metal reserves."
   Pulser →
     "**Pulsers** can create Cadmium bubbles where time flows slower than outside the bubble. This can be useful to travel forward in time or temporarily incapacitate anyone inside the speed bubble from an outsider's perspective. Bullets crossing the bubble's border seem to change course in unpredictable ways."
   Slider →
@@ -156,7 +233,7 @@ ferringDetails = \case
   Windwhisperer →
     "**Windwhisperers** can store sensitivity of senses. One sense may be stored each in a tinmind."
   Brute →
-    "**Brutes** can store strength. Unlike Allomantic pewter, Brutes actually change their muscle mass and become physically larger."
+    "**Brutes** can store strength. Unlike Thugs (Pewter Allomancers), Brutes actually change their muscle mass and become physically larger."
   Archivist →
     "**Archivists** can store memories inside copperminds. When an Archivist stores a memory in a coppermind, it immediately disappears from their memory. Memories stored in a coppermind are filed individually and are not seen as one whole memory to the Archivist."
   Sentry →
@@ -180,81 +257,89 @@ ferringDetails = \case
 
 comboAnecdote ∷ Misting → Ferring → Maybe GenderNeutral
 comboAnecdote mist ferr = case (mist, ferr) of
-  (Tineye, Windwhisperer)    → Just "Eagle Eyes are known to be frighteningly perceptive."
-  (Tineye, Steelrunner)      → Just "No one can escate a Catcher's sight or speed."
-  (Tineye, Archivist)        → Just "Monitors are detail-oriented and meticulous."
-  (Tineye, Sparker)          → Just "Quickwits can adjust plans at lightning speed."
-  (Tineye, Spinner)          → Just "Keeneyes cannot be cheated out of a victory at cards."
-  (Thug, Brute)              → Just "Hefters live for physical challenges."
-  (Thug, Steelrunner)        → Just "Sprinters are extremely difficult to best in a fistfight."
-  (Thug, Sparker)            → Just "Sooners are fearsome fighters exploiting any opportunity."
-  (Thug, Spinner)            → Just "Scrappers are known to have the best drunken brawl stories."
-  (Thug, Bloodmaker)         → Just "Brutebloods are never counted out of a fight."
-  (Thug, Gasper)             → Just "Marathoners are known for being utterly tireless."
-  (Lurcher, Brute)           → Just "Scalers scale buildings with great speed and grace."
-  (Lurcher, Skimmer)         → Just "Deaders are notorious for smashing themselves flat."
-  (Lurcher, Steelrunner)     → Just "Guardians are tremendously popular bodyguards."
-  (Lurcher, Sparker)         → Just "Navigators are nimble and quick-witted Ironswingers."
-  (Coinshot, Windwhisperer)  → Just "Sharpshooters are crach shots and deadly gunfighters."
-  (Coinshot, Skimmer)        → Just "Crashers are exceptionally destructive and dangerous."
-  (Coinshot, Steelrunner)    → Just "Swifts are fast and destructive, often criminals."
-  (Coinshot, Trueself)       → Just "Shrouds are known to be nameless assassins."
-  (Coinshot, Connector)      → Just "Bigshots are often leaders of law enforcement and gangs."
-  (Coinshot, Spinner)        → Just "Luckshots frequently evade death and have a deadly reputation."
-  (Coinshot, Gasper)         → Just "Cloudtouchers soar to heights that no others can reach."
-  (Smoker, Archivist)        → Just "Copperkeeps have inhumanly good memory."
-  (Smoker, Sentry)           → Just "Shrouds are great allies to criminal crews."
-  (Smoker, Firesoul)         → Just "Boilers are tough-to-track-down survivalists"
-  (Smoker, Trueself)         → Just "Ghostwalkers seem benenath everyone's notice."
-  (Smoker, Connector)        → Just "Shelters are cers' best friends."
-  (Smoker, Spinner)          → Just "Maskers are a blessing to any cer crew."
-  (Seeker, Windwhisperer)    → Just "Sentinels are masters of all six senses."
-  (Seeker, Steelrunner)      → Just "Hazedodgers are skilled cer hunters."
-  (Seeker, Archivist)        → Just "Metalmappers are meticulous chroniclers of Metalborn."
-  (Seeker, Sentry)           → Just "Sleepless are overstimulated and overly sensitive."
-  (Seeker, Sparker)          → Just "Mistings find Pulsewises impossible to trick."
-  (Seeker, Subsumer)         → Just "Stalkers pursue their quarry without end."
-  (Rioter, Brute)            → Just "Strongarms wins opponents over, one way or the other."
-  (Rioter, Sparker)          → Just "Masterminds can outthink or mess with anyone's head."
-  (Rioter, Trueself)         → Just "Loudmouths are strongly opinionated."
-  (Rioter, Connector)        → Just "Zealots are frighteningly persuasive."
-  (Rioter, Spinner)          → Just "Highrollers turn everything into a high-stakes gamble."
-  (Soother, Sparker)         → Just "Schemers are quick-witted deceivers."
-  (Soother, Firesoul)        → Just "Coolers chills bodies as well as hot tempers."
-  (Soother, Trueself)        → Just "Icons are natural leaders."
-  (Soother, Connector)       → Just "Pacifiers are excellent peacemakers."
-  (Soother, Spinner)         → Just "Slicks are smooth talkers and lucky varmints."
-  (Soother, Pinnacle)        → Just "Resolutes are masterful negotiators and diplomats."
-  (AluminumGnat, Trueself)   → Just "Puremind are self-made, self-assured, and usually rich."
-  (DuraluminGnat, Connector) → Just "Friendlies are blissed-out, likeable weirdos."
-  (Leecher, Brute)           → Just "Metalbreakers never fight fair."
-  (Leecher, Spinner)         → Just "Ringers are incredibly and unfairly lucky."
-  (Leecher, Subsumer)        → Just "Gulpers consume physical and magical energy."
-  (Nicroburst, Brute)        → Just "Boosters provide physical and mystical support."
-  (Nicroburst, Archivist)    → Just "Burst Tickers never forget a favor done for a Misting."
-  (Nicroburst, Connector)    → Just "Enablers feed both magic and ego."
-  (Nicroburst, Soulbearer)   → Just "Soulbursts may be of great importance to the Cosmere."
-  (Nicroburst, Pinnacle)     → Just "Cohorts are the fearless sidekicks of string cers."
-  (Augur, Archivist)         → Just "Chroniclers record the past so that they do not repeat it."
-  (Augur, Trueself)          → Just "Vessels are known to change personality overnight."
-  (Augur, Bloodmaker)        → Just "Timeless are unkillable and rumored to be immortal."
-  (Augur, Pinnacle)          → Just "Introspects analyze every detail of their lives."
-  (Oracle, Skimmer)          → Just "Whimflitters are prone to change plans."
-  (Oracle, Sparker)          → Just "Flickers have the fastest reaction times in the world."
-  (Oracle, Spinner)          → Just "Charmed are impossible to ambush."
-  (Oracle, Pinnacle)         → Just "Visionaries see the future and face it boldly."
-  (Pulser, Sentry)           → Just "Plotters are skilled at executing long-term plans."
-  (Pulser, Bloodmaker)       → Just "Yearspanners appear to have extraordinarily long lifespans."
-  (Pulser, Gasper)           → Just "Chrysalises endure dire situations until things improve."
-  (Slider, Windwhisperer)    → Just "Spotters are able to take in every detail."
-  (Slider, Steelrunner)      → Just "Blurs are inhumanly productive."
-  (Slider, Archivist)        → Just "Assessors can break down events second by second."
-  (Slider, Sparker)          → Just "Flashwits are expert negotiators and planners."
-  (Slider, Trueself)         → Just "Monuments can flip from dull to magnetic instantly."
-  (Slider, Bloodmaker)       → Just "Constants seem unaffected by time or age."
-  (Slider, Pinnacle)         → Just "Transcendents face the unknown without hesitation."
-  (Slider, Subsumer)         → Just "Sated are ascetic loners."
+  -- Mistborn Adventure Game combos
+  -- (I changed up some of them if I didn't understand them or if they seemed to
+  -- assume non-canon properties of Identity, Fortune, etc...)
+  (Tineye, Windwhisperer)    → Just "**Eagle Eyes** are known to be frighteningly perceptive."
+  (Tineye, Steelrunner)      → Just "No one can escate a **Catcher**'s sight or speed."
+  (Tineye, Archivist)        → Just "**Monitors** are detail-oriented and meticulous."
+  (Tineye, Sparker)          → Just "**Quickwits** can adjust plans at lightning speed."
+  (Tineye, Spinner)          → Just "**Keeneyes** cannot be cheated out of a victory at cards."
+  (Thug, Brute)              → Just "**Hefters** live for physical challenges."
+  (Thug, Steelrunner)        → Just "**Sprinters** are extremely difficult to best in a fistfight."
+  (Thug, Sparker)            → Just "**Sooners** are fearsome fighters exploiting any opportunity."
+  (Thug, Spinner)            → Just "**Scrappers** are known to have the best drunken brawl stories."
+  (Thug, Bloodmaker)         → Just "**Brutebloods** are never counted out of a fight."
+  (Thug, Gasper)             → Just "**Marathoners** are known for being utterly tireless."
+  (Lurcher, Brute)           → Just "**Scalers** scale buildings with great speed and grace."
+  (Lurcher, Skimmer)         → Just "**Deaders** are notorious for smashing themselves flat."
+  (Lurcher, Steelrunner)     → Just "**Guardians** are tremendously popular bodyguards."
+  (Lurcher, Sparker)         → Just "**Navigators** are nimble and quick-witted Ironswingers."
+  (Coinshot, Windwhisperer)  → Just "**Sharpshooters** are crach shots and deadly gunfighters."
+  (Coinshot, Skimmer)        → Just "**Crashers** are exceptionally destructive and dangerous."
+  (Coinshot, Steelrunner)    → Just "**Swifts** are fast and destructive, often criminals."
+  (Coinshot, Trueself)       → Just "**Shrouds** are known to be nameless assassins."
+  (Coinshot, Connector)      → Just "**Bigshots** are often leaders of law enforcement and gangs."
+  (Coinshot, Spinner)        → Just "**Luckshots** frequently evade death and have a deadly reputation."
+  (Coinshot, Gasper)         → Just "**Cloudtouchers** soar to heights that no others can reach."
+  (Smoker, Archivist)        → Just "**Copperkeeps** have inhumanly good memory."
+  (Smoker, Sentry)           → Just "**Shrouds** are great allies to criminal crews."
+  (Smoker, Firesoul)         → Just "**Boilers** are tough-to-track-down survivalists"
+  (Smoker, Trueself)         → Just "**Ghostwalkers** seem benenath everyone's notice."
+  (Smoker, Connector)        → Just "**Shelters** are Allomancers' best friends."
+  (Smoker, Spinner)          → Just "**Maskers** are a blessing to any Allomancer crew."
+  (Seeker, Windwhisperer)    → Just "**Sentinels** are masters of all six senses."
+  (Seeker, Steelrunner)      → Just "**Hazedodgers** are skilled Allomancer hunters."
+  (Seeker, Archivist)        → Just "**Metalmappers** are meticulous chroniclers of Metalborn."
+  (Seeker, Sentry)           → Just "**Sleepless** are overstimulated and overly sensitive."
+  (Seeker, Sparker)          → Just "**Mistings** find Pulsewises impossible to trick."
+  (Seeker, Subsumer)         → Just "**Stalkers** pursue their quarry without end."
+  (Rioter, Brute)            → Just "**Strongarms** wins opponents over, one way or the other."
+  (Rioter, Sparker)          → Just "**Masterminds** can outthink or mess with anyone's head."
+  (Rioter, Trueself)         → Just "**Loudmouths** are strongly opinionated."
+  (Rioter, Connector)        → Just "**Zealots** are frighteningly persuasive."
+  (Rioter, Spinner)          → Just "**Highrollers** turn everything into a high-stakes gamble."
+  (Soother, Sparker)         → Just "**Schemers** are quick-witted deceivers."
+  (Soother, Firesoul)        → Just "**Coolers** chills bodies as well as hot tempers."
+  (Soother, Trueself)        → Just "**Icons** are natural leaders."
+  (Soother, Connector)       → Just "**Pacifiers** are excellent peacemakers."
+  (Soother, Spinner)         → Just "**Slicks** are smooth talkers and lucky varmints."
+  (Soother, Pinnacle)        → Just "**Resolutes** are masterful negotiators and diplomats."
+  (AluminumGnat, Trueself)   → Just "**Puremind** are self-made, self-assured, and usually rich."
+  (DuraluminGnat, Connector) → Just "**Friendlies** are blissed-out, likeable weirdos."
+  (Leecher, Brute)           → Just "**Metalbreakers** never fight fair."
+  (Leecher, Spinner)         → Just "**Ringers** are incredibly and unfairly lucky."
+  (Leecher, Subsumer)        → Just "**Gulpers** consume physical and magical energy."
+  (Nicroburst, Brute)        → Just "**Boosters** provide physical and mystical support."
+  (Nicroburst, Archivist)    → Just "**Burst Tickers** never forget a favor done for a Misting."
+  (Nicroburst, Connector)    → Just "**Enablers** feed both magic and ego."
+  (Nicroburst, Soulbearer)   → Just "**Soulbursts** may be of great importance to the Cosmere."
+  (Nicroburst, Pinnacle)     → Just "**Cohorts** are the fearless sidekicks of string Allomancers."
+  (Augur, Archivist)         → Just "**Chroniclers** record the past so that they do not repeat it."
+  (Augur, Trueself)          → Just "**Vessels** are known to change personality overnight."
+  (Augur, Bloodmaker)        → Just "**Timeless** are unkillable and rumored to be immortal."
+  (Augur, Pinnacle)          → Just "**Introspects** analyze every detail of their lives."
+  (Oracle, Skimmer)          → Just "**Whimflitters** are prone to change plans."
+  (Oracle, Sparker)          → Just "**Flickers** have the fastest reaction times in the world."
+  (Oracle, Spinner)          → Just "**Charmed** are impossible to ambush."
+  (Oracle, Pinnacle)         → Just "**Visionaries** see the future and face it boldly."
+  (Pulser, Sentry)           → Just "**Plotters** are skilled at executing long-term plans."
+  (Pulser, Bloodmaker)       → Just "**Yearspanners** appear to have extraordinarily long lifespans."
+  (Pulser, Gasper)           → Just "**Chrysalises** endure dire situations until things improve."
+  (Slider, Windwhisperer)    → Just "**Spotters** are able to take in every detail."
+  (Slider, Steelrunner)      → Just "**Blurs** are inhumanly productive."
+  (Slider, Archivist)        → Just "**Assessors** can break down events second by second."
+  (Slider, Sparker)          → Just "**Flashwits** are expert negotiators and planners."
+  (Slider, Trueself)         → Just "**Monuments** can flip from dull to magnetic instantly."
+  (Slider, Bloodmaker)       → Just "**Constants** seem unaffected by time or age."
+  (Slider, Pinnacle)         → Just "**Transcendents** face the unknown without hesitation."
+  (Slider, Subsumer)         → Just "**Sated** are ascetic loners."
   _                          → Nothing
 
 ppGn ∷ Show a ⇒ a → GenderNeutral
 ppGn = txt . toText . pp
+
+oxford ∷ (IsString s, Monoid s) ⇒ [s] → s
+oxford []     = ""
+oxford [x]    = x
+oxford (x:xs) = x ⊕ (if length xs ≡ 1 then " and " else ", ") ⊕ oxford xs

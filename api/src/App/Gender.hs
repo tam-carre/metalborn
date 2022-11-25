@@ -1,6 +1,9 @@
+{-# LANGUAGE OverloadedLists #-}
+
 module App.Gender
   ( Gender (..)
   , GenderNeutral
+  , an
   , applyGender
   , are
   , pverb
@@ -14,19 +17,20 @@ module App.Gender
   , were
   ) where
 
-import App.RNG.Rand  (randomEnum, randomEnumR)
+import App.RNG.Rand  (randomEl, randomEnumR)
 import App.Utils     (applyWhen)
-import Data.Char     (toUpper)
-import Data.Text     (dropAround, toTitle, unsnoc)
+import Data.Char     (toLower)
+import Data.Text     qualified as T
+import Relude.Unsafe qualified as Unsafe
 import System.Random (Random (..))
 
 ----------------------------------------------------------------------------------------------------
 
-data Gender = Male | Female | Other deriving (Bounded, Enum, Eq)
+data Gender = Male | Female | Other deriving (Bounded, Enum, Eq, Show)
 
 instance Random Gender where
   randomR = randomEnumR
-  random  = randomEnum
+  random  = randomEl [Male, Female]
 
 newtype GenderNeutral
   = GN [El]
@@ -54,24 +58,25 @@ applyGender ∷ Gender → GenderNeutral → Text
 applyGender g (GN els) = loop "" els where
   loop acc []     = acc
   loop acc (x:xs) = loop (acc ⊕ renderEl acc x) xs
-  isSentenceStart         = (Just '.' ≡) . fmap snd . unsnoc . dropAround (≡ ' ')
-  maybeCapitalized acc fn = applyWhen (isSentenceStart acc) toTitle (fn g)
+  isSentenceStart         = (Just '.' ≡) . fmap snd . T.unsnoc . T.dropAround (≡ ' ')
+  maybeCapitalized acc fn = applyWhen (isSentenceStart acc) T.toTitle (fn g)
   renderEl _   (Txt t)         = t
   renderEl _   (PresentVerb v) = v ⊕ if g ≡ Other then "" else "s "
   renderEl acc (Token tok)     = maybeCapitalized acc $ renderToken tok
   renderToken They       = unGn "he" "she" "they"
-  renderToken Them       = unGn "his" "her" "their"
+  renderToken Them       = unGn "him" "her" "them"
   renderToken Theirs     = unGn "his" "hers" "theirs"
-  renderToken Their      = unGn "him" "her" "them"
+  renderToken Their      = unGn "hi" "her" "their"
   renderToken Are        = unGn "is" "is" "are"
   renderToken Were       = unGn "was" "was" "were"
   renderToken Themselves = unGn "himself" "herself" "themselves"
 
+-- | Bad and hacky
 uncapitalize ∷ GenderNeutral → GenderNeutral
 uncapitalize (GN ((Txt t):xs)) = GN (Txt (uncapTxt t):xs) where
   uncapTxt = toText . uncapStr . toString
   uncapStr []     = []
-  uncapStr (c:cs) = toUpper c : cs
+  uncapStr (c:cs) = toLower c : cs
 uncapitalize other = other
 
 data El
@@ -86,3 +91,9 @@ unGn ∷ a → a → a → Gender → a
 unGn a _ _ Male   = a
 unGn _ a _ Female = a
 unGn _ _ a Other  = a
+
+an ∷ GenderNeutral → GenderNeutral
+an noun = if startsWithVowel noun then "an" else "a" where
+  startsWithVowel (GN ((Txt t):_)) = isVowel . Unsafe.head . toString $ T.strip t
+  startsWithVowel _                = False
+  isVowel c = c ∈ "aeioAEIO" -- Can't know for u... eh...

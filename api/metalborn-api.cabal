@@ -24,17 +24,20 @@ source-repository head
 
 library
   exposed-modules:
+      App
       App.Character
       App.Character.Abilities
       App.Character.Description
       App.Character.Metalborn
       App.Character.Name
+      App.DB
       App.Gender
       App.RNG.Probability
       App.RNG.Rand
       App.Utils
       Main
       Prelude
+      REPL
   other-modules:
       Paths_metalborn_api
   hs-source-dirs:
@@ -66,6 +69,10 @@ library
     , lens
     , lens-aeson
     , mtl
+    , opaleye
+    , postgresql-simple
+    , product-profunctors
+    , profunctors
     , random
     , relude
     , servant
@@ -79,16 +86,19 @@ library
 executable metalborn-api-exe
   main-is: Main.hs
   other-modules:
+      App
       App.Character
       App.Character.Abilities
       App.Character.Description
       App.Character.Metalborn
       App.Character.Name
+      App.DB
       App.Gender
       App.RNG.Probability
       App.RNG.Rand
       App.Utils
       Prelude
+      REPL
       Paths_metalborn_api
   hs-source-dirs:
       src
@@ -120,6 +130,10 @@ executable metalborn-api-exe
     , lens-aeson
     , metalborn-api
     , mtl
+    , opaleye
+    , postgresql-simple
+    , product-profunctors
+    , profunctors
     , random
     , relude
     , servant
@@ -134,7 +148,8 @@ test-suite metalborn-api-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      AbilitiesSpec
+      CharacterAbilitiesSpec
+      CharacterDescriptionSpec
       Paths_metalborn_api
   hs-source-dirs:
       test
@@ -166,6 +181,10 @@ test-suite metalborn-api-test
     , lens-aeson
     , metalborn-api
     , mtl
+    , opaleye
+    , postgresql-simple
+    , product-profunctors
+    , profunctors
     , random
     , relude
     , servant

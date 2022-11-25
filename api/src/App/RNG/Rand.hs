@@ -55,7 +55,7 @@ randomlySplit ∷ [a] → Rand ([a], [a])
 randomlySplit xs = splitAt <$> randR (0, length xs) ?? xs
 
 randomEl ∷ RandomGen g ⇒ NonEmpty a → StockRandom g a
-randomEl xs = randomR (0, length xs) ⋙ _1 %~ (xs NE.!!)
+randomEl xs = randomR (0, length xs - 1) ⋙ _1 %~ (xs NE.!!)
 
 randomEnum ∷ ∀ a g . (Enum a, Bounded a, RandomGen g) ⇒ StockRandom g a
 randomEnum = randomR bounds ⋙ _1 %~ toEnum where

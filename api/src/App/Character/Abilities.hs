@@ -2,7 +2,7 @@
 
 module App.Character.Abilities
   ( Abilities (..)
-  , AbilitiesObtained
+  , AbilitiesObtained (AbilitiesObtained)
   , AbilityProbabilities (..)
   , mkAbilities
   ) where
@@ -26,8 +26,8 @@ data AbilitiesObtained
   = AbilitiesObtained
     { spikedA ∷ [Metal]
     , spikedF ∷ [Metal]
-    , medailA ∷ [Metal]
-    , medailF ∷ [Metal]
+    , medallA ∷ [Metal]
+    , medallF ∷ [Metal]
     , grenade ∷ Bool
     }
   deriving (Generic, Show)
@@ -41,7 +41,7 @@ data AbilityProbabilities
     , twinborn  ∷ Probability
     , fullPower ∷ Probability
     , spike     ∷ Probability
-    , medail    ∷ Probability
+    , medall    ∷ Probability
     , grenade   ∷ Probability
     }
   deriving (Generic, Show)
@@ -52,7 +52,7 @@ instance Default AbilityProbabilities where
     , twinborn  = 0.8
     , fullPower = 0.01
     , spike     = 0.05
-    , medail    = 0.05
+    , medall    = 0.05
     , grenade   = 0.25
     }
 
@@ -85,11 +85,11 @@ mkMetalborn ps = do
 mkAbilitiesObtained ∷ AbilityProbabilities → Rand AbilitiesObtained
 mkAbilitiesObtained ps = do
   spikeNum  ← exponentiallyRarer ps.spike
-  medailNum ← exponentiallyRarer ps.medail
+  medallNum ← exponentiallyRarer ps.medall
   spikes    ← sequence $ rand <$ drop 1 [0..spikeNum]
-  medails   ← sequence $ rand <$ drop 1 [0..medailNum]
+  medalls   ← sequence $ rand <$ drop 1 [0..medallNum]
   grenade   ← randBool ps.grenade
   (spikedA, spikedF) ← randomlySplit spikes
-  (medailA, medailF) ← randomlySplit medails
+  (medallA, medallF) ← randomlySplit medalls
 
-  pure $ AbilitiesObtained { spikedA, spikedF, medailA, medailF, grenade }
+  pure $ AbilitiesObtained { spikedA, spikedF, medallA, medallF, grenade }

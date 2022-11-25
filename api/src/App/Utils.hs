@@ -1,4 +1,4 @@
-module App.Utils (applyWhen, pascalToTitleCase, pp, justIf) where
+module App.Utils (applyWhen, justIf, pascalToTitleCase, pp) where
 
 import Data.Char (isUpper)
 
@@ -9,7 +9,7 @@ pascalToTitleCase ∷ String → String
 pascalToTitleCase ""     = ""
 pascalToTitleCase (c:cs) = c:loop cs where
   loop "" = ""
-  loop (x:xs) | isUpper x = ' ':x:loop cs
+  loop (x:xs) | isUpper x = ' ':x:loop xs
               | otherwise = x:loop xs
 
 pp ∷ Show a ⇒ a → String
