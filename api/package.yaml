@@ -40,6 +40,7 @@ dependencies:
 - product-profunctors
 - profunctors
 - postgresql-simple
+- safe-exceptions
 
 language: GHC2021
 

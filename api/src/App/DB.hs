@@ -1,8 +1,8 @@
 {-# LANGUAGE DataKinds, TypeFamilies #-}
 
-module App.DB (createCharacter, getCharacter) where
+module App.DB (createCharacter, deleteCharacter, getCharacter) where
 
-import App                             (App, withDb)
+import App                             (App, AppError (..), DBError (..), intercept)
 import App.Character                   (Character (Character))
 import App.Character.Description       (DescriptionBlock (..))
 import App.Character.Name              (Name (..))
@@ -12,11 +12,13 @@ import Data.Generics.Product.Positions (HasPosition (..))
 import Data.Profunctor.Product         (p2, p5)
 import Data.Profunctor.Product.Default (Default)
 import Data.Profunctor.Product.Default qualified as D
-import Opaleye                         (DefaultFromField (..), Field, FromField, FromFields,
-                                        Insert (..), Select, SqlInt4, SqlText, SqlVarcharN, Table,
-                                        ToFields, rCount, runInsert, runSelect, selectTable, table,
-                                        tableField, toFields, where_, (.&&), (.==))
-import Opaleye.Experimental.Enum
+import Database.PostgreSQL.Simple      qualified as PGS
+import Opaleye                         (DefaultFromField (..), Delete (..), Field, FromField,
+                                        FromFields, Insert (..), Select, SqlInt4, SqlText,
+                                        SqlVarcharN, Table, ToFields, rCount, runDelete, runInsert,
+                                        runSelect, selectTable, table, tableField, toFields, where_,
+                                        (.&&), (.==))
+import Opaleye.Experimental.Enum       (EnumMapper (..), enumMapper)
 import Opaleye.Internal.Inferrable     (Inferrable (..))
 
 ----------------------------------------------------------------------------------------------------
@@ -34,18 +36,35 @@ getCharacter name gender = do
 
 createCharacter ∷ Character → App ()
 createCharacter (Character name gender descriptionBlocks) = do
-  _ ← runInsert' (characterInsert name gender)
-  _ ← runInsert' (descriptionBlockInsert name gender descriptionBlocks)
+  _ ← runInsert' $ characterInsert name gender
+  _ ← runInsert' $ descriptionBlockInsert name gender descriptionBlocks
+  pass
+
+deleteCharacter ∷ Name → Gender → App ()
+deleteCharacter name gender = do
+  _ ← runDelete' $ characterDelete name gender
+  _ ← runDelete' $ descriptionBlockDelete name gender
   pass
 
 ----------------------------------------------------------------------------------------------------
 -- Utils (not exported)
+
+withDb ∷ (PGS.Connection → a → IO b) → a → App b
+withDb f x = intercept h do
+  db ← asks (^. #db)
+  liftIO $ f db x
+  where h err = DBError $ if PGS.sqlState err ≡ "23505"
+                            then UniqueConstraintViolated
+                            else OtherDBError err
 
 runSelect' ∷ (Default FromFields fields hs) ⇒ Select fields → App [hs]
 runSelect' = withDb runSelect
 
 runInsert' ∷ Insert b → App b
 runInsert' = withDb runInsert
+
+runDelete' ∷ Delete b → App b
+runDelete' = withDb runDelete
 
 ----------------------------------------------------------------------------------------------------
 -- Characters (not exported)
@@ -72,6 +91,12 @@ characterWithDescSelect (Name (toFields → name)) (toFields → gender) = do
 characterInsert ∷ Name → Gender → Insert Int64
 characterInsert (Name (toFields → name)) (toFields → gender) =
   Insert charactersTable [(name, gender)] rCount Nothing
+
+characterDelete ∷ Name → Gender → Delete Int64
+characterDelete (Name (toFields → name)) (toFields → gender) =
+  Delete charactersTable shouldDelete rCount where
+    shouldDelete (name', gender') = name'   .== name
+                                .&& gender' .== gender
 
 ----------------------------------------------------------------------------------------------------
 -- Description Block (not exported)
@@ -113,6 +138,12 @@ descriptionBlockInsert (Name name) gender blocks =
       , toFields name
       , toFields gender
       )
+
+descriptionBlockDelete ∷ Name → Gender → Delete Int64
+descriptionBlockDelete (Name (toFields → name)) (toFields → gender) =
+  Delete descriptionBlocksTable shouldDelete rCount where
+    shouldDelete (_,_,_, name', gender') = name'   .== name
+                                       .&& gender' .== gender
 
 ----------------------------------------------------------------------------------------------------
 -- Gender Enum (not exported)

@@ -7,9 +7,12 @@ module Prelude
   , module Data.Monoid.Unicode
   , module Data.Ord.Unicode
   , module Relude
+  , module Control.Monad.Except
+  , module Control.Exception.Safe
   , echo
   ) where
 
+import Control.Monad.Except
 import Control.Arrow.Unicode
 import Control.Monad.Unicode
 import Data.Bool.Unicode
@@ -19,6 +22,7 @@ import Data.List.Unicode
 import Data.Monoid.Unicode
 import Data.Ord.Unicode
 import Relude
+import Control.Exception.Safe (MonadCatch (..), MonadThrow (..), catchAny)
 
 ----------------------------------------------------------------------------------------------------
 

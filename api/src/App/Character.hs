@@ -19,6 +19,7 @@ data Character
     , gender      ∷ Gender
     , description ∷ [DescriptionBlock]
     }
+  deriving (Eq, Generic, Show)
 
 data CharacterUserInput
   = CharacterUserInput
