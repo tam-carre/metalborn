@@ -1,11 +1,10 @@
-module App.RNG.Probability
-  ( Probability
-  , balanced
-  , certain
-  , impossible
-  , parseProbability
-  , unProb
-  ) where
+{-# LANGUAGE TemplateHaskell #-}
+
+module App.RNG.Probability (Probability, balanced, unProb) where
+
+import Data.Aeson      (FromJSON (..), ToJSON (..), Value (..))
+import Data.Scientific (fromFloatDigits, toRealFloat)
+import Servant.Elm     (defaultOptions, deriveElmDef)
 
 ----------------------------------------------------------------------------------------------------
 
@@ -16,23 +15,22 @@ newtype Probability
   = ProbabilityNOEXPORT Float
   deriving (Eq, Fractional, Num, Show)
 
+deriveElmDef defaultOptions ''Probability
+
+instance FromJSON Probability where
+  parseJSON (Number n) | 0 ≤ n ∧ n ≤ 1 = pure . ProbabilityNOEXPORT $ toRealFloat n
+                       | otherwise     = fail "number not between 0 and 1"
+  parseJSON _ = fail "not a number"
+
+instance ToJSON Probability where
+  toJSON (ProbabilityNOEXPORT p) = Number $ fromFloatDigits p
+
 instance Bounded Probability where
   minBound = 0
   maxBound = 1
 
 unProb ∷ Probability → Float
 unProb (ProbabilityNOEXPORT float) = float
-
-parseProbability ∷ MonadFail m ⇒ Float → m Probability
-parseProbability x
-  | 0 ≤ x ∧ x ≤ 1 = pure $ ProbabilityNOEXPORT x
-  | otherwise     = fail $ "Expected number between 0 and 1 inclusive, got " ⊕ show x
-
-certain ∷ Probability
-certain = 1
-
-impossible ∷ Probability
-impossible = 0
 
 balanced ∷ Probability
 balanced = 0.5

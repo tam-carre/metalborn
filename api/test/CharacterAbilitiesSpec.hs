@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, OverloadedRecordDot #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 
 module CharacterAbilitiesSpec (spec) where
 

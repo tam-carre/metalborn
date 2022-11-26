@@ -1,6 +1,6 @@
-{-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE OverloadedLists, TemplateHaskell #-}
 
-module App.Character.Description (DescriptionBlock (..), describeAbilities) where
+module App.Character.Description (DescriptionBlock (..), describeAbilities, seed) where
 
 import App.Character.Abilities (Abilities (Abilities), AbilitiesObtained (AbilitiesObtained))
 import App.Character.Metalborn (Ferring (..), Halfborn (..), Metal, Metalborn (..), Misting (..),
@@ -10,9 +10,10 @@ import App.Character.Name      (Name (..))
 import App.Gender              (Gender (Male), GenderNeutral, applyGender, their, them, themselves,
                                 they, txt, uncapitalize, were)
 import App.RNG.Rand            (Rand, randEl)
-import App.Utils               (pp)
 import Data.List               (singleton)
 import Relude.Unsafe           qualified as Unsafe
+import Servant.Elm             (defaultOptions, deriveBoth)
+import System.Random           (StdGen, mkStdGen)
 
 ----------------------------------------------------------------------------------------------------
 
@@ -25,11 +26,19 @@ data DescriptionBlock
   | GrenadeBlock Text
   deriving (Eq, Generic, Show)
 
-describeAbilities ∷ Name → Gender → Abilities → Rand [DescriptionBlock]
-describeAbilities name gender (Abilities inborn obtained) = do
-  inbornDesc   ← inbornBreakdown name gender inborn
-  obtainedDesc ← obtainedBreakdown name gender obtained
-  pure (inbornDesc ++ obtainedDesc)
+deriveBoth defaultOptions ''DescriptionBlock
+
+describeAbilities ∷ Name → Gender → Abilities → [DescriptionBlock]
+describeAbilities name gender (Abilities inborn obtained) =
+  evaluatingState (seed name gender) do
+    inbornDesc   ← inbornBreakdown name gender inborn
+    obtainedDesc ← obtainedBreakdown name gender obtained
+    pure (inbornDesc ++ obtainedDesc)
+
+seed ∷ Name → Gender → StdGen
+seed (Name name) gender = mkStdGen (nameAsInt + genderAsInt) where
+  nameAsInt   = Unsafe.read . concatMap (show . ord) $ toString name
+  genderAsInt = fromEnum gender
 
 inbornBreakdown ∷ Name → Gender → Maybe Metalborn → Rand [DescriptionBlock]
 inbornBreakdown (Name (txt → name)) gender mb =

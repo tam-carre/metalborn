@@ -1,6 +1,6 @@
 module DBSpec (spec) where
 
-import App                       (App, AppError (..), DBError (..), runApp)
+import App                       (App, AppError (..), DBError (..), mkEnv, runAppWith)
 import App.Character             (Character (..))
 import App.Character.Description (DescriptionBlock (..))
 import App.Character.Name        (Name (Name))
@@ -11,21 +11,8 @@ import Test.Hspec                (Spec, beforeAll, it, shouldBe)
 
 ----------------------------------------------------------------------------------------------------
 
-data PreviousTestsStatus = PreviousTestsSuccessful | PreviousTestsFailed deriving (Eq, Show)
-
--- | Helper to prevent effectful or expensive tests from running if previous
--- tests failed
-expectWithShortCircuit ∷ (Eq a, Show a) ⇒
-  Either AppError a → App a → IORef PreviousTestsStatus → IO ()
-expectWithShortCircuit expected app ref =
-  do
-    status ← readIORef ref
-    status `shouldBe` PreviousTestsSuccessful
-
-    appResult ← runApp app
-    when (appResult ≢ expected) (writeIORef ref PreviousTestsFailed)
-    appResult `shouldBe` expected
-
+-- | These effectful integration tests are run against whatever database is set in Config.hs
+-- If one fails, the remaining ones will not be run.
 spec ∷ Spec
 spec = beforeAll (newIORef PreviousTestsSuccessful) do
   let dummyName   = Name Secrets.dummyCharacterName
@@ -56,3 +43,19 @@ spec = beforeAll (newIORef PreviousTestsSuccessful) do
   it "getCharacter should now retrieve Nothing when trying to get the deleted char" .
     expectWithShortCircuit (Right Nothing) $
       DB.getCharacter dummyName dummyGender
+
+data PreviousTestsStatus = PreviousTestsSuccessful | PreviousTestsFailed deriving (Eq, Show)
+
+-- | Helper to prevent effectful or expensive tests from running if previous
+-- tests failed
+expectWithShortCircuit ∷ (Eq a, Show a) ⇒
+  Either AppError a → App a → IORef PreviousTestsStatus → IO ()
+expectWithShortCircuit expected app ref =
+  do
+    env ← mkEnv
+    status ← readIORef ref
+    status `shouldBe` PreviousTestsSuccessful
+
+    appResult ← runAppWith env app
+    when (appResult ≢ expected) $ writeIORef ref PreviousTestsFailed
+    appResult `shouldBe` expected

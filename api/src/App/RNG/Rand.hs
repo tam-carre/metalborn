@@ -10,17 +10,19 @@ module App.RNG.Rand
   , randBool
   , randEl
   , randR
+  , randWith
   , randomEl
   , randomEnum
   , randomEnumR
   , randomlySplit
   , toRand
+  , toRandIO
   ) where
 
 import App.RNG.Probability (Probability, balanced, unProb)
 import Control.Lens        (Field1 (_1), both, (%~))
 import Data.List.NonEmpty  qualified as NE
-import System.Random       (Random (random, randomR), RandomGen, StdGen)
+import System.Random       (Random (random, randomR), RandomGen, StdGen, initStdGen)
 
 ----------------------------------------------------------------------------------------------------
 
@@ -28,10 +30,14 @@ import System.Random       (Random (random, randomR), RandomGen, StdGen)
 type StockRandom g a = g → (a, g)
 
 type Rand  = RandT Identity
+
 type RandT = StateT StdGen
 
 rand ∷ (Random r) ⇒ Rand r
 rand = state random
+
+randWith ∷ Random r ⇒ StdGen → r
+randWith = evalState rand
 
 randR ∷ (Random r) ⇒ (r, r) → Rand r
 randR = state . randomR
@@ -66,3 +72,6 @@ randomEnumR bounds = randomR (bounds & both %~ fromEnum) ⋙ _1 %~ toEnum
 
 toRand ∷ Random a ⇒ Maybe a → Rand a
 toRand = maybe rand pure
+
+toRandIO ∷ (Random a, MonadIO m) ⇒ Maybe a → m a
+toRandIO maybeA = evalState (toRand maybeA) <$> initStdGen

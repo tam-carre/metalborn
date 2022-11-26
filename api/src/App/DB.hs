@@ -1,9 +1,7 @@
-{-# LANGUAGE DataKinds, TypeFamilies #-}
-
 module App.DB (createCharacter, deleteCharacter, getCharacter) where
 
 import App                             (App, AppError (..), DBError (..), intercept)
-import App.Character                   (Character (Character))
+import App.Character                   (Character (..))
 import App.Character.Description       (DescriptionBlock (..))
 import App.Character.Name              (Name (..))
 import App.Gender                      (Gender (..))
@@ -14,10 +12,10 @@ import Data.Profunctor.Product.Default (Default)
 import Data.Profunctor.Product.Default qualified as D
 import Database.PostgreSQL.Simple      qualified as PGS
 import Opaleye                         (DefaultFromField (..), Delete (..), Field, FromField,
-                                        FromFields, Insert (..), Select, SqlInt4, SqlText,
-                                        SqlVarcharN, Table, ToFields, rCount, runDelete, runInsert,
-                                        runSelect, selectTable, table, tableField, toFields, where_,
-                                        (.&&), (.==))
+                                        Insert (..), Select, SqlInt4, SqlText, SqlVarcharN, Table,
+                                        ToFields, rCount, runDelete, runInsert, runSelectI,
+                                        selectTable, table, tableField, toFields, where_, (.&&),
+                                        (.==))
 import Opaleye.Experimental.Enum       (EnumMapper (..), enumMapper)
 import Opaleye.Internal.Inferrable     (Inferrable (..))
 
@@ -25,46 +23,36 @@ import Opaleye.Internal.Inferrable     (Inferrable (..))
 -- Characters (exported)
 
 getCharacter ∷ Name → Gender → App (Maybe Character)
-getCharacter name gender = do
-  let query = characterWithDescSelect name gender
-  queryResult ← runSelect' query ∷ App [((Text, Gender), (Text → DescriptionBlock, Text))]
-  pure $ toTyped queryResult
+getCharacter name gender = typed <$> toApp runSelectI (characterWithDescSelect name gender)
   where
-  toTyped []                 = Nothing
-  toTyped (((nm, gd), b):xs) = Just $ Character (Name nm) gd (mkBlock <$> (b:map snd xs))
-  mkBlock (kind, content)    = kind content
+  typed []                 = Nothing
+  typed (((n, g), b):rows) = Just $ Character (Name n) g (mkBlock <$> (b:map snd rows))
+  mkBlock (kind, content)  = kind content
 
 createCharacter ∷ Character → App ()
-createCharacter (Character name gender descriptionBlocks) = do
-  _ ← runInsert' $ characterInsert name gender
-  _ ← runInsert' $ descriptionBlockInsert name gender descriptionBlocks
-  pass
+createCharacter (Character name gender descriptionBlocks) =
+  traverse_ (toApp runInsert)
+    [ characterInsert name gender
+    , descriptionBlockInsert name gender descriptionBlocks
+    ]
 
 deleteCharacter ∷ Name → Gender → App ()
-deleteCharacter name gender = do
-  _ ← runDelete' $ characterDelete name gender
-  _ ← runDelete' $ descriptionBlockDelete name gender
-  pass
+deleteCharacter name gender =
+  traverse_ (toApp runDelete)
+    [ characterDelete name gender
+    , descriptionBlockDelete name gender
+    ]
 
 ----------------------------------------------------------------------------------------------------
 -- Utils (not exported)
 
-withDb ∷ (PGS.Connection → a → IO b) → a → App b
-withDb f x = intercept h do
-  db ← asks (^. #db)
-  liftIO $ f db x
-  where h err = DBError $ if PGS.sqlState err ≡ "23505"
-                            then UniqueConstraintViolated
-                            else OtherDBError err
-
-runSelect' ∷ (Default FromFields fields hs) ⇒ Select fields → App [hs]
-runSelect' = withDb runSelect
-
-runInsert' ∷ Insert b → App b
-runInsert' = withDb runInsert
-
-runDelete' ∷ Delete b → App b
-runDelete' = withDb runDelete
+toApp ∷ (PGS.Connection → a → IO b) → a → App b
+toApp f x =
+  ( liftIO . (`f` x) =≪ asks (^. #db)
+  ) `intercept` \err → DBError $
+    case decodeUtf8 @String (PGS.sqlState err) of
+      "23505" → UniqueConstraintViolated
+      _       → OtherDBError err
 
 ----------------------------------------------------------------------------------------------------
 -- Characters (not exported)

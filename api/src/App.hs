@@ -1,10 +1,23 @@
-{-# LANGUAGE OverloadedRecordDot, ScopedTypeVariables #-}
+{-# OPTIONS_GHC -Wno-unused-foralls #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 
-module App (App (..), AppError (..), DBError (..), Env (..), intercept, mkEnv, runApp) where
+module App
+  ( App (..)
+  , AppError (..)
+  , DBError (..)
+  , Env (..)
+  , intercept
+  , mkEnv
+  , runAppWith
+  , runServer
+  ) where
 
 import Config                     (Config (..), appConf)
 import Control.Exception.Safe     (catch)
 import Database.PostgreSQL.Simple qualified as PGS
+import Network.Wai.Handler.Warp   (Port, run)
+import Relude.Extra.Newtype       (un)
+import Servant                    (Handler, HasServer, ServerT, err400, err500, hoistServer, serve)
 
 ----------------------------------------------------------------------------------------------------
 
@@ -25,11 +38,9 @@ newtype Env
   = Env { db ∷ PGS.Connection }
   deriving (Generic)
 
-mkEnv ∷ MonadIO m ⇒ m Env
-mkEnv = Env <$> liftIO (PGS.connect appConf.pg)
-
 data AppError
   = DBError DBError
+  | BadRequestError
   | UnknownError Text
   deriving (Eq, Generic, Show)
 
@@ -38,23 +49,24 @@ data DBError
   | OtherDBError PGS.SqlError
   deriving (Eq, Generic, Show)
 
-runAppWith ∷ MonadIO m ⇒ App a → Env → m (Either AppError a)
-runAppWith app env = liftIO
-                   . runExceptT
-                   . usingReaderT env
-                   . unApp
-                   . safeize
-                   $ app
+runServer ∷ ∀ k (api ∷ k) . HasServer k '[] ⇒ Port → Proxy k → ServerT k App → IO ()
+runServer port api server = do
+  env ← mkEnv
 
-runApp ∷ MonadIO m ⇒ App a → m (Either AppError a)
-runApp app = runAppWith app =≪ mkEnv
+  run port . serve api . hoistServer api (appToServantHandler env) $ server
+  where
+  appToServantHandler ∷ ∀ a . Env → App a → Handler a
+  appToServantHandler env = runAppWith env ↣ \case
+    Right a              → pure a
+    Left BadRequestError → throwError err400
+    Left e               → print e ≫ throwError err500
 
-unApp ∷ App a → ReaderT Env (ExceptT AppError IO) a
-unApp (App a) = a
+mkEnv ∷ MonadIO m ⇒ m Env
+mkEnv = liftIO (Env <$> PGS.connect appConf.pg)
 
-intercept ∷ ∀ e a . Exception e ⇒ (e → AppError) → App a → App a
-intercept toAppErr app = catch @App @e app (throwError . toAppErr)
+runAppWith ∷ MonadIO m ⇒ Env → App a → m (Either AppError a)
+runAppWith env = liftIO . runExceptT . usingReaderT env . un . catchAllSyncExcs where
+  catchAllSyncExcs = (`catchAny` (throwError . UnknownError . toText . displayException))
 
--- Make all runtime exceptions be caught into UnknownError
-safeize ∷ App a → App a
-safeize = (`catchAny` (throwError . UnknownError . toText . displayException))
+intercept ∷ ∀ e a . Exception e ⇒ App a → (e → AppError) → App a
+intercept app toAppErr = catch @App @e app (throwError . toAppErr)

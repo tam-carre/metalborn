@@ -1,9 +1,12 @@
-{-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE OverloadedLists, TemplateHaskell #-}
 
-module App.Character.Name (Name (..)) where
+module App.Character.Name (Name (..), parseIfPresentElseRand) where
 
-import App.RNG.Rand  (randomEl)
-import System.Random (Random (..))
+import App           (App, AppError (BadRequestError))
+import App.RNG.Rand  (randWith, randomEl)
+import Data.Text     (strip, toTitle)
+import Servant.Elm   (defaultOptions, deriveBoth)
+import System.Random (Random (..), initStdGen)
 
 ----------------------------------------------------------------------------------------------------
 
@@ -11,9 +14,21 @@ newtype Name
   = Name Text
   deriving (Eq, Generic, Show)
 
+deriveBoth defaultOptions ''Name
+
 instance Random Name where
   random  = randomEl $ Name <$> generatedNames
   randomR = const random
+
+parseIfPresentElseRand ∷ Maybe Text → App Name
+parseIfPresentElseRand = \case
+  Nothing  → randWith <$> initStdGen
+  Just txt → positJust BadRequestError $ parseName txt
+
+parseName ∷ Text → Maybe Name
+parseName = strip ⋙ \case
+  ""   → fail "Invalid name."
+  name → pure . Name $ toTitle name
 
 generatedNames ∷ NonEmpty Text
 generatedNames =

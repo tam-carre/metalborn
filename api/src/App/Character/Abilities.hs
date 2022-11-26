@@ -1,8 +1,8 @@
-{-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE TemplateHaskell, OverloadedRecordDot #-}
 
 module App.Character.Abilities
   ( Abilities (..)
-  , AbilitiesObtained (AbilitiesObtained)
+  , AbilitiesObtained (..)
   , AbilityProbabilities (..)
   , mkAbilities
   ) where
@@ -10,8 +10,8 @@ module App.Character.Abilities
 import App.Character.Metalborn (Halfborn (..), Metal, Metalborn (..), Singleborn (..), mkTwinborn)
 import App.RNG.Probability     (Probability)
 import App.RNG.Rand            (Rand, coinflip, exponentiallyRarer, rand, randBool, randomlySplit)
-import App.Utils               (justIf)
 import Data.Default            (Default (..))
+import Servant.Elm             (deriveBoth, defaultOptions)
 
 ----------------------------------------------------------------------------------------------------
 
@@ -44,7 +44,9 @@ data AbilityProbabilities
     , medall    ∷ Probability
     , grenade   ∷ Probability
     }
-  deriving (Generic, Show)
+  deriving (Eq, Generic, Show)
+
+deriveBoth defaultOptions ''AbilityProbabilities
 
 instance Default AbilityProbabilities where
   def = AbilityProbabilities

@@ -9,15 +9,13 @@ import Secrets qualified
 
 -- ATM config is hardcoded
 
-data Config
+newtype Config
   = Config
-    { pg   ∷ ConnectInfo
-    , todo ∷ Int
+    { pg ∷ ConnectInfo
     }
   deriving (Generic)
 
 appConf ∷ Config
 appConf = Config
   { pg = ConnectInfo Secrets.pgHost 5432 "tam-carre" Secrets.pgPw "tam-carre/metalborn"
-  , todo = 42
   }

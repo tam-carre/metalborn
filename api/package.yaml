@@ -18,6 +18,7 @@ dependencies:
 - hspec-contrib
 - servant
 - servant-client
+- servant-server
 - http-client
 - aeson
 - http-conduit
@@ -41,6 +42,9 @@ dependencies:
 - profunctors
 - postgresql-simple
 - safe-exceptions
+- scientific
+- warp
+- servant-elm >= 0.7.2
 
 language: GHC2021
 
@@ -53,6 +57,9 @@ default-extensions:
 - DuplicateRecordFields
 - ViewPatterns
 - BlockArguments
+- DataKinds
+- TypeOperators
+- TypeFamilies
 
 ghc-options:
 - -Wall

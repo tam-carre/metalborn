@@ -1,9 +1,8 @@
-{-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE OverloadedLists, TemplateHaskell #-}
 
 module App.Gender
   ( Gender (..)
   , GenderNeutral
-  , an
   , applyGender
   , are
   , pverb
@@ -18,15 +17,16 @@ module App.Gender
   ) where
 
 import App.RNG.Rand  (randomEl, randomEnumR)
-import App.Utils     (applyWhen)
 import Data.Char     (toLower)
 import Data.Text     qualified as T
-import Relude.Unsafe qualified as Unsafe
+import Servant.Elm   (defaultOptions, deriveBoth)
 import System.Random (Random (..))
 
 ----------------------------------------------------------------------------------------------------
 
-data Gender = Male | Female | Other deriving (Bounded, Enum, Eq, Show)
+data Gender = Male | Female | Other deriving (Bounded, Enum, Eq, Generic, Show)
+
+deriveBoth defaultOptions ''Gender
 
 instance Random Gender where
   randomR = randomEnumR
@@ -34,7 +34,13 @@ instance Random Gender where
 
 newtype GenderNeutral
   = GN [El]
-  deriving (Eq, Monoid, Semigroup, Show)
+  deriving (Eq, Show)
+
+instance Semigroup GenderNeutral where
+  (<>) (GN a) (GN b) = GN (a ⊕ b)
+
+instance Monoid GenderNeutral where
+  mempty = GN []
 
 instance IsString GenderNeutral where fromString s = GN [Txt . toText $ s]
 
@@ -91,9 +97,3 @@ unGn ∷ a → a → a → Gender → a
 unGn a _ _ Male   = a
 unGn _ a _ Female = a
 unGn _ _ a Other  = a
-
-an ∷ GenderNeutral → GenderNeutral
-an noun = if startsWithVowel noun then "an" else "a" where
-  startsWithVowel (GN ((Txt t):_)) = isVowel . Unsafe.head . toString $ T.strip t
-  startsWithVowel _                = False
-  isVowel c = c ∈ "aeioAEIO" -- Can't know for u... eh...

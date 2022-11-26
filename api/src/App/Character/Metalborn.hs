@@ -11,7 +11,6 @@ module App.Character.Metalborn
   , feruchemicalAttribute
   , mistingMetal
   , mkTwinborn
-  , singlebornMetal
   ) where
 
 import App.RNG.Rand  (randomEnum, randomEnumR)
@@ -91,11 +90,6 @@ data FeruchemicalAttribute = Weight | PhysicalSpeed | MentalSpeed | Warmth | Sen
 
 mkTwinborn ∷ Misting → Ferring → Metalborn
 mkTwinborn misting ferring = Twinborn misting ferring $ twinborn misting ferring
-
-singlebornMetal ∷ Singleborn → Metal
-singlebornMetal = \case
-  Misting m → mistingMetal m
-  Ferring f → ferringMetal f
 
 mistingMetal ∷ Misting → Metal
 mistingMetal = \case

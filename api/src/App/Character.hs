@@ -1,15 +1,12 @@
-{-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE TemplateHaskell #-}
 
-module App.Character (Character (..), CharacterInput (..), fillCharacterInput, seed) where
+module App.Character (Character (..), mkCharacter) where
 
-import App.Character.Abilities   (Abilities)
-import App.Character.Description (DescriptionBlock)
+import App.Character.Abilities   (AbilityProbabilities, mkAbilities)
+import App.Character.Description (DescriptionBlock (..), describeAbilities, seed)
 import App.Character.Name        (Name (..))
-import App.Gender                (Gender)
-import App.RNG.Rand              (Rand, randomEnum, randomEnumR, toRand)
-import Data.Default              (Default (..))
-import Relude.Unsafe             qualified as Unsafe
-import System.Random             (Random (..), StdGen, mkStdGen)
+import App.Gender                (Gender (..))
+import Servant.Elm (deriveBoth, defaultOptions)
 
 ----------------------------------------------------------------------------------------------------
 
@@ -21,26 +18,11 @@ data Character
     }
   deriving (Eq, Generic, Show)
 
-data CharacterUserInput
-  = CharacterUserInput
-    { name   ∷ Maybe Name
-    , gender ∷ Maybe Gender
-    }
+deriveBoth defaultOptions ''Character
 
-instance Default CharacterUserInput where
-  def = CharacterUserInput Nothing Nothing
-
-data CharacterInput
-  = CharacterInput
-    { name   ∷ Name
-    , gender ∷ Gender
-    }
-
-fillCharacterInput ∷ CharacterUserInput → Rand CharacterInput
-fillCharacterInput maybes = CharacterInput <$> toRand maybes.name <*> toRand maybes.gender
-
--- | A character's name and gender determine the RNG seed
-seed ∷ Name → Gender → StdGen
-seed (Name name) gender = mkStdGen (nameAsInt + genderAsInt) where
-  nameAsInt   = Unsafe.read . concatMap (show . ord) $ toString name
-  genderAsInt = fromEnum gender
+mkCharacter ∷ Name → Gender → AbilityProbabilities → Character
+mkCharacter name gender probabs =
+  let abilitiesGen      = seed name gender
+      abilities         = evalState (mkAbilities probabs) abilitiesGen
+      descriptionBlocks = describeAbilities name gender abilities
+  in Character name gender descriptionBlocks
