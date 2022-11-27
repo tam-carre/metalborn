@@ -34,13 +34,7 @@ instance Random Gender where
 
 newtype GenderNeutral
   = GN [El]
-  deriving (Eq, Show)
-
-instance Semigroup GenderNeutral where
-  (<>) (GN a) (GN b) = GN (a ⊕ b)
-
-instance Monoid GenderNeutral where
-  mempty = GN []
+  deriving (Eq, Monoid, Semigroup, Show)
 
 instance IsString GenderNeutral where fromString s = GN [Txt . toText $ s]
 
