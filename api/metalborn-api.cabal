@@ -31,9 +31,12 @@ library
       App.Character.Metalborn
       App.Character.Name
       App.DB
+      App.Docs
+      App.Elm
       App.Gender
       App.RNG.Probability
       App.RNG.Rand
+      App.Server
       Config
       Main
       Prelude
@@ -64,12 +67,15 @@ library
     , bytestring
     , containers
     , data-default
+    , elm-bridge
     , extra
     , generic-lens
     , hspec
     , hspec-contrib
+    , http-api-data
     , http-client
     , http-conduit
+    , http-types
     , lens
     , lens-aeson
     , mtl
@@ -83,12 +89,15 @@ library
     , scientific
     , servant
     , servant-client
-    , servant-elm >=0.7.2
+    , servant-docs
+    , servant-elm
+    , servant-foreign
     , servant-server
     , template-haskell
     , text
     , time
     , vector
+    , wai
     , warp
   default-language: GHC2021
 
@@ -102,9 +111,12 @@ executable metalborn-api-exe
       App.Character.Metalborn
       App.Character.Name
       App.DB
+      App.Docs
+      App.Elm
       App.Gender
       App.RNG.Probability
       App.RNG.Rand
+      App.Server
       Config
       Prelude
       REPL
@@ -133,12 +145,15 @@ executable metalborn-api-exe
     , bytestring
     , containers
     , data-default
+    , elm-bridge
     , extra
     , generic-lens
     , hspec
     , hspec-contrib
+    , http-api-data
     , http-client
     , http-conduit
+    , http-types
     , lens
     , lens-aeson
     , metalborn-api
@@ -153,12 +168,15 @@ executable metalborn-api-exe
     , scientific
     , servant
     , servant-client
-    , servant-elm >=0.7.2
+    , servant-docs
+    , servant-elm
+    , servant-foreign
     , servant-server
     , template-haskell
     , text
     , time
     , vector
+    , wai
     , warp
   default-language: GHC2021
 
@@ -193,12 +211,15 @@ test-suite metalborn-api-test
     , bytestring
     , containers
     , data-default
+    , elm-bridge
     , extra
     , generic-lens
     , hspec
     , hspec-contrib
+    , http-api-data
     , http-client
     , http-conduit
+    , http-types
     , lens
     , lens-aeson
     , metalborn-api
@@ -213,11 +234,14 @@ test-suite metalborn-api-test
     , scientific
     , servant
     , servant-client
-    , servant-elm >=0.7.2
+    , servant-docs
+    , servant-elm
+    , servant-foreign
     , servant-server
     , template-haskell
     , text
     , time
     , vector
+    , wai
     , warp
   default-language: GHC2021

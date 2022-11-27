@@ -14,6 +14,7 @@ module Prelude
   , justIf
   , positJust
   , pp
+  , (≪)
   ) where
 
 import Control.Arrow.Unicode
@@ -53,3 +54,6 @@ justIf cond a = if cond then Just a else Nothing
 positJust ∷ MonadError e m ⇒ e → Maybe a → m a
 positJust _err (Just a) = pure a
 positJust err  Nothing  = throwError err
+
+(≪) ∷ Monad m ⇒ m a → m b → m a
+(≪) = flip (≫)

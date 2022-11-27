@@ -44,7 +44,13 @@ dependencies:
 - safe-exceptions
 - scientific
 - warp
-- servant-elm >= 0.7.2
+- servant-elm
+- elm-bridge
+- servant-foreign
+- http-types
+- wai
+- servant-docs
+- http-api-data
 
 language: GHC2021
 

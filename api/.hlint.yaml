@@ -1,5 +1,6 @@
 - arguments:
 
+
   - "-XConstraintKinds"
   - "-XDeriveGeneric"
   - "-XGeneralizedNewtypeDeriving"
@@ -3324,3 +3325,7 @@
 - warn:
     lhs: "x <&> const f"
     rhs: "x &> f"
+- warn:
+    lhs: "f $ g $ h x"
+    note: "more compositional"
+    rhs: "f . g $ h x"

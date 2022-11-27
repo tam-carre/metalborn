@@ -57,7 +57,7 @@ inbornBreakdown (Name (txt → name)) gender mb =
     Just (Twinborn mist ferr twin')            → twinbornDesc name gender mist ferr twin'
 
 obtainedBreakdown ∷ Name → Gender → AbilitiesObtained → Rand [DescriptionBlock]
-obtainedBreakdown (Name (txt → name)) gender (AbilitiesObtained spkA spkF mdlA mdlF grn) = do
+obtainedBreakdown (Name (txt → name)) gender (AbilitiesObtained spkA spkF mdlF grn) = do
   spkReason ← randEl
                 [ name ⊕ ", after defeating Hemalurgists, came into possession of"
                 , name ⊕ " was entrusted by Harmony with"
@@ -84,8 +84,8 @@ obtainedBreakdown (Name (txt → name)) gender (AbilitiesObtained spkA spkF mdlA
       access  = "granting " ⊕ them ⊕ " access to, or a boost of power in, "
       spkNum  = length (spkA ++ spkF)
       spkExpl = expl "Hemalurgic spike" spkReason spkNum spkA spkF
-      mdlNum  = length (mdlA ++ mdlF)
-      mdlExpl = expl "Southern Medallion" mdlReason mdlNum mdlA mdlF
+      mdlNum  = length mdlF
+      mdlExpl = expl "Southern Medallion" mdlReason mdlNum [] mdlF
 
   pure $ [SpikesBlock    (applyGender gender spkExpl) | spkNum ≢ 0]
        ⊕ [MedallionBlock (applyGender gender mdlExpl) | mdlNum ≢ 0]

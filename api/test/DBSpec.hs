@@ -1,8 +1,10 @@
 module DBSpec (spec) where
 
-import App                       (App, AppError (..), DBError (..), mkEnv, runAppWith)
+import App                       (App, AppError (..), DBError (..), runApp')
 import App.Character             (Character (..))
+import App.Character.Abilities   (Abilities (..), AbilitiesObtained (..))
 import App.Character.Description (DescriptionBlock (..))
+import App.Character.Metalborn   (Ferring (..), Halfborn (..), Metal (..), Metalborn (..))
 import App.Character.Name        (Name (Name))
 import App.DB                    qualified as DB
 import App.Gender                (Gender (Male))
@@ -18,7 +20,9 @@ spec = beforeAll (newIORef PreviousTestsSuccessful) do
   let dummyName   = Name Secrets.dummyCharacterName
       dummyGender = Male
       dummyBlocks = [AllomancyBlock "dummy allo", FeruchemyBlock "dummy feru"]
-      dummyChara  = Character dummyName dummyGender dummyBlocks
+      dummyAbils  = Abilities (Just . Halfborn . Mistborn $ Just Skimmer)
+                              (AbilitiesObtained [Steel] [] [] True)
+      dummyChara  = Character dummyName dummyGender dummyAbils dummyBlocks
 
   it "getCharacter should successfully query a nonexistent char, but retrieve Nothing" .
     expectWithShortCircuit (Right Nothing) $
@@ -52,10 +56,9 @@ expectWithShortCircuit ∷ (Eq a, Show a) ⇒
   Either AppError a → App a → IORef PreviousTestsStatus → IO ()
 expectWithShortCircuit expected app ref =
   do
-    env ← mkEnv
     status ← readIORef ref
     status `shouldBe` PreviousTestsSuccessful
 
-    appResult ← runAppWith env app
+    appResult ← runApp' app
     when (appResult ≢ expected) $ writeIORef ref PreviousTestsFailed
     appResult `shouldBe` expected

@@ -1,6 +1,7 @@
 -- | Import this in the REPL to have everything imported
 module REPL
-  ( module App.Character.Abilities
+  ( module App.Character
+  , module App.Character.Abilities
   , module App.Character.Description
   , module App.Character.Metalborn
   , module App.Character.Name
@@ -14,6 +15,7 @@ module REPL
   , module System.Random
   ) where
 
+import App.Character
 import App.Character.Abilities
 import App.Character.Description
 import App.Character.Metalborn

@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module App.Character.Metalborn
   ( Ferring (..)
   , FeruchemicalAttribute (..)
@@ -13,24 +15,12 @@ module App.Character.Metalborn
   , mkTwinborn
   ) where
 
-import App.RNG.Rand  (randomEnum, randomEnumR)
-import Prelude       hiding (Identity)
-import System.Random (Random (..))
+import App.RNG.Rand (deriveRandomEnumBounded)
+import Prelude      hiding (Identity)
+import Servant.Elm  (defaultOptions, deriveBoth)
 
 ----------------------------------------------------------------------------------------------------
-
-data Metal = Iron | Steel | Tin | Pewter | Zinc | Brass | Copper | Bronze | Cadmium | Bendalloy | Gold | Electrum | Chromium | Nicrosil | Aluminum | Duralumin deriving
-  ( Bounded
-  , Enum
-  , Eq
-  , Generic
-  , Ord
-  , Show
-  )
-
-instance Random Metal where
-  randomR = randomEnumR
-  random  = randomEnum
+-- Types (Exported)
 
 data Metalborn
   = Singleborn Singleborn
@@ -56,11 +46,8 @@ data Misting = Coinshot | Lurcher | Rioter | Soother | Thug | Tineye | Smoker | 
   , Generic
   , Ord
   , Show
+  , Read
   )
-
-instance Random Misting where
-  randomR = randomEnumR
-  random  = randomEnum
 
 data Ferring = Skimmer | Steelrunner | Sparker | Firesoul | Windwhisperer | Brute | Archivist | Sentry | Spinner | Soulbearer | Gasper | Subsumer | Trueself | Connector | Bloodmaker | Pinnacle deriving
   ( Bounded
@@ -69,17 +56,18 @@ data Ferring = Skimmer | Steelrunner | Sparker | Firesoul | Windwhisperer | Brut
   , Generic
   , Ord
   , Show
+  , Read
   )
-
-instance Random Ferring where
-  randomR = randomEnumR
-  random  = randomEnum
 
 -- https://www.17thshard.com/forum/topic/97725-twinborn-names/
 data Twinborn = EagleEye | Catcher | Monitor | Quickwit | Keeneye | Hefter | Sprinter | Sooner | Scrapper | Bruteblood | Marathoner | Scaler | Deader | Guardian | Navigator | Stalwart | Sharpshooter | Crasher | Swift | Shroud | Bigshot | Luckshot | Cloudtoucher | Copperkeep | Boiler | Ghostwalker | Shelter | Masker | Sentinel | Hazedodger | Metalmapper | Sleepless | Pulsewise | Stalker | Strongarm | Mastermind | Loudmouth | Zealot | Highroller | Instigator | Schemer | Cooler | Icon | Pacifier | Slick | Resolute | Puremind | Friendly | Metalbreaker | Ringer | Sapper | Gulper | Booster | BurstTicker | Enabler | Soulburst | Cohort | Chronicler | Vessel | Timeless | Introspect | Whimflitter | Foresight | Flicker | Charmed | Visionary | Plotter | Yearspanner | Chrysalis | Spotter | Blur | Assessor | Flashwit | Monument | Constant | Transcendent | Sated deriving
   ( Eq
   , Generic
   , Show
+  , Bounded
+  , Enum
+  , Ord
+  , Read
   )
 
 data FeruchemicalAttribute = Weight | PhysicalSpeed | MentalSpeed | Warmth | Senses | Strength | Memories | Wakefulness | Fortune | Investiture | Breath | Energy | Identity | Connection | Health | Determination deriving
@@ -88,68 +76,33 @@ data FeruchemicalAttribute = Weight | PhysicalSpeed | MentalSpeed | Warmth | Sen
   , Show
   )
 
+data Metal = Iron | Steel | Tin | Pewter | Zinc | Brass | Copper | Bronze | Cadmium | Bendalloy | Gold | Electrum | Chromium | Nicrosil | Aluminum | Duralumin deriving
+  ( Bounded
+  , Enum
+  , Eq
+  , Generic
+  , Ord
+  , Show
+  , Read
+  )
+
+deriveRandomEnumBounded ''Metal
+deriveRandomEnumBounded ''Misting
+deriveRandomEnumBounded ''Ferring
+
+deriveBoth defaultOptions ''Ferring
+deriveBoth defaultOptions ''Misting
+deriveBoth defaultOptions ''Twinborn
+deriveBoth defaultOptions ''Metal
+deriveBoth defaultOptions ''Singleborn
+deriveBoth defaultOptions ''Halfborn
+deriveBoth defaultOptions ''Metalborn
+
+----------------------------------------------------------------------------------------------------
+-- Functions (Exported)
+
 mkTwinborn ∷ Misting → Ferring → Metalborn
-mkTwinborn misting ferring = Twinborn misting ferring $ twinborn misting ferring
-
-mistingMetal ∷ Misting → Metal
-mistingMetal = \case
-  Coinshot      → Steel
-  Lurcher       → Iron
-  Rioter        → Zinc
-  Soother       → Brass
-  Thug          → Pewter
-  Tineye        → Tin
-  Smoker        → Copper
-  Seeker        → Bronze
-  DuraluminGnat → Duralumin
-  AluminumGnat  → Aluminum
-  Augur         → Gold
-  Oracle        → Electrum
-  Nicroburst    → Nicrosil
-  Leecher       → Chromium
-  Pulser        → Cadmium
-  Slider        → Bendalloy
-
-ferringMetal ∷ Ferring → Metal
-ferringMetal = \case
-  Steelrunner   → Steel
-  Skimmer       → Iron
-  Sparker       → Zinc
-  Firesoul      → Brass
-  Windwhisperer → Tin
-  Brute         → Pewter
-  Archivist     → Copper
-  Sentry        → Bronze
-  Spinner       → Chromium
-  Connector     → Duralumin
-  Soulbearer    → Nicrosil
-  Gasper        → Cadmium
-  Subsumer      → Bendalloy
-  Trueself      → Aluminum
-  Bloodmaker    → Gold
-  Pinnacle      → Electrum
-
-feruchemicalAttribute ∷ Metal → FeruchemicalAttribute
-feruchemicalAttribute = \case
-  Iron      → Weight
-  Steel     → PhysicalSpeed
-  Zinc      → MentalSpeed
-  Brass     → Warmth
-  Tin       → Senses
-  Pewter    → Strength
-  Copper    → Memories
-  Bronze    → Wakefulness
-  Chromium  → Fortune
-  Nicrosil  → Investiture
-  Cadmium   → Breath
-  Bendalloy → Energy
-  Aluminum  → Identity
-  Duralumin → Connection
-  Gold      → Health
-  Electrum  → Determination
-
-twinborn ∷ Misting → Ferring → Maybe Twinborn
-twinborn misting ferring = case (misting, ferring) of
+mkTwinborn misting ferring = Twinborn misting ferring $ case (misting, ferring) of
   -- Mistborn Adventure Game names
   -- (I tried to remove those that I do not understand or that seem to assume non-canon
   -- properties of Identity, Fortune etc...)
@@ -233,3 +186,59 @@ twinborn misting ferring = case (misting, ferring) of
   (Slider, Subsumer)         → Just Sated
   _                          → Nothing
 
+mistingMetal ∷ Misting → Metal
+mistingMetal = \case
+  Coinshot      → Steel
+  Lurcher       → Iron
+  Rioter        → Zinc
+  Soother       → Brass
+  Thug          → Pewter
+  Tineye        → Tin
+  Smoker        → Copper
+  Seeker        → Bronze
+  DuraluminGnat → Duralumin
+  AluminumGnat  → Aluminum
+  Augur         → Gold
+  Oracle        → Electrum
+  Nicroburst    → Nicrosil
+  Leecher       → Chromium
+  Pulser        → Cadmium
+  Slider        → Bendalloy
+
+ferringMetal ∷ Ferring → Metal
+ferringMetal = \case
+  Steelrunner   → Steel
+  Skimmer       → Iron
+  Sparker       → Zinc
+  Firesoul      → Brass
+  Windwhisperer → Tin
+  Brute         → Pewter
+  Archivist     → Copper
+  Sentry        → Bronze
+  Spinner       → Chromium
+  Connector     → Duralumin
+  Soulbearer    → Nicrosil
+  Gasper        → Cadmium
+  Subsumer      → Bendalloy
+  Trueself      → Aluminum
+  Bloodmaker    → Gold
+  Pinnacle      → Electrum
+
+feruchemicalAttribute ∷ Metal → FeruchemicalAttribute
+feruchemicalAttribute = \case
+  Iron      → Weight
+  Steel     → PhysicalSpeed
+  Zinc      → MentalSpeed
+  Brass     → Warmth
+  Tin       → Senses
+  Pewter    → Strength
+  Copper    → Memories
+  Bronze    → Wakefulness
+  Chromium  → Fortune
+  Nicrosil  → Investiture
+  Cadmium   → Breath
+  Bendalloy → Energy
+  Aluminum  → Identity
+  Duralumin → Connection
+  Gold      → Health
+  Electrum  → Determination

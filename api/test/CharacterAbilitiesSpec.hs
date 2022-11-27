@@ -36,6 +36,9 @@ spec = do
       medallMetalsGrouped      = group . sort . join $ medallOut
       outsWithGrenade          = length $ filter (^. position @2 . #grenade) outs
 
+  it "dummy" $ do True `shouldBe` True
+
+
   it "should produce expected proportion of metalborn" $ do
     withinMOE probs.metalborn outsMetalborn `shouldBe` True
 
@@ -48,7 +51,7 @@ spec = do
         outsWithAtLeastTwoSpikes = length . filter ((2 ≤) . length) $ map spikes outs
     withinMOE twoSpikeProb outsWithAtLeastTwoSpikes `shouldBe` True
 
-  it "should produce expected proportion of medalllions" $ do
+  it "should produce expected proportion of medallions" $ do
     withinMOE probs.medall outsWithAtLeastOneMedall `shouldBe` True
     let twoMedallProb = probs.medall * probs.medall
         outsWithAtLeastTwoMedall = length . filter ((2 ≤) . length) $ map medalls outs
@@ -65,8 +68,6 @@ spec = do
     all (withinMOE (0.0625 * probs.spike) . length) spikesMetalsGrouped `shouldBe` True
     all (withinMOE (0.0625 * probs.medall) . length) medallMetalsGrouped `shouldBe` True
 
-    True `shouldBe` True
-
 isMetalborn ∷ Abilities → Bool
 isMetalborn (Abilities mb _) = isJust mb
 
@@ -82,4 +83,4 @@ spikes ∷ Abilities → [Metal]
 spikes (Abilities _ o) = (o ^. #spikedA) ++ (o ^. #spikedF)
 
 medalls ∷ Abilities → [Metal]
-medalls (Abilities _ o) = (o ^. #medallA) ++ (o ^. #medallF)
+medalls (Abilities _ o) = o ^. #medallF

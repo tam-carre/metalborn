@@ -19,18 +19,22 @@ module App.Gender
 import App.RNG.Rand  (randomEl, randomEnumR)
 import Data.Char     (toLower)
 import Data.Text     qualified as T
+import Servant.Docs  (ToSample (..), singleSample)
 import Servant.Elm   (defaultOptions, deriveBoth)
 import System.Random (Random (..))
 
 ----------------------------------------------------------------------------------------------------
 
-data Gender = Male | Female | Other deriving (Bounded, Enum, Eq, Generic, Show)
+data Gender = Male | Female | Other deriving (Bounded, Enum, Eq, Generic, Read, Show)
 
 deriveBoth defaultOptions ''Gender
 
 instance Random Gender where
   randomR = randomEnumR
   random  = randomEl [Male, Female]
+
+instance ToSample Gender where
+  toSamples _ = singleSample Male
 
 newtype GenderNeutral
   = GN [El]

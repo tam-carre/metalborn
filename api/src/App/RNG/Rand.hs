@@ -1,10 +1,11 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables, TemplateHaskell #-}
 
 -- | Random functions in a State StdGen monad
 module App.RNG.Rand
   ( Rand
   , RandT
   , coinflip
+  , deriveRandomEnumBounded
   , exponentiallyRarer
   , rand
   , randBool
@@ -22,6 +23,7 @@ module App.RNG.Rand
 import App.RNG.Probability (Probability, balanced, unProb)
 import Control.Lens        (Field1 (_1), both, (%~))
 import Data.List.NonEmpty  qualified as NE
+import Language.Haskell.TH (Dec, Name, Q, conT)
 import System.Random       (Random (random, randomR), RandomGen, StdGen, initStdGen)
 
 ----------------------------------------------------------------------------------------------------
@@ -75,3 +77,11 @@ toRand = maybe rand pure
 
 toRandIO ∷ (Random a, MonadIO m) ⇒ Maybe a → m a
 toRandIO maybeA = evalState (toRand maybeA) <$> initStdGen
+
+deriveRandomEnumBounded ∷ Name → Q [Dec]
+deriveRandomEnumBounded name =
+  [d|
+    instance Random $(conT name) where
+      randomR = randomEnumR
+      random  = randomEnum
+  |]

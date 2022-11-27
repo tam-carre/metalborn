@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, OverloadedRecordDot #-}
+{-# LANGUAGE OverloadedRecordDot, TemplateHaskell #-}
 
 module App.Character.Abilities
   ( Abilities (..)
@@ -11,13 +11,14 @@ import App.Character.Metalborn (Halfborn (..), Metal, Metalborn (..), Singleborn
 import App.RNG.Probability     (Probability)
 import App.RNG.Rand            (Rand, coinflip, exponentiallyRarer, rand, randBool, randomlySplit)
 import Data.Default            (Default (..))
-import Servant.Elm             (deriveBoth, defaultOptions)
+import Servant.Docs            (ToSample (..), singleSample)
+import Servant.Elm             (defaultOptions, deriveBoth)
 
 ----------------------------------------------------------------------------------------------------
 
 data Abilities
   = Abilities (Maybe Metalborn) AbilitiesObtained
-  deriving (Generic, Show)
+  deriving (Eq, Generic, Show)
 
 instance Default Abilities where
   def = Abilities Nothing def
@@ -26,14 +27,14 @@ data AbilitiesObtained
   = AbilitiesObtained
     { spikedA ∷ [Metal]
     , spikedF ∷ [Metal]
-    , medallA ∷ [Metal]
+      -- , medallA ∷ [Metal] -- for now let us assume you can't gain allomancy from medallions
     , medallF ∷ [Metal]
     , grenade ∷ Bool
     }
-  deriving (Generic, Show)
+  deriving (Eq, Generic, Show)
 
 instance Default AbilitiesObtained where
-  def = AbilitiesObtained [] [] [] [] False
+  def = AbilitiesObtained [] [] [] False
 
 data AbilityProbabilities
   = AbilityProbabilities
@@ -46,8 +47,6 @@ data AbilityProbabilities
     }
   deriving (Eq, Generic, Show)
 
-deriveBoth defaultOptions ''AbilityProbabilities
-
 instance Default AbilityProbabilities where
   def = AbilityProbabilities
     { metalborn = 1
@@ -57,6 +56,13 @@ instance Default AbilityProbabilities where
     , medall    = 0.05
     , grenade   = 0.25
     }
+
+instance ToSample AbilityProbabilities where
+  toSamples _ = singleSample def
+
+deriveBoth defaultOptions ''AbilityProbabilities
+deriveBoth defaultOptions ''AbilitiesObtained
+deriveBoth defaultOptions ''Abilities
 
 mkAbilities ∷ AbilityProbabilities → Rand Abilities
 mkAbilities ps = Abilities <$> mkMetalborn ps <*> mkAbilitiesObtained ps
@@ -70,8 +76,8 @@ mkMetalborn ps = do
   misting     ← rand
   ferring     ← rand
 
-  let mistborn    = Halfborn $ Mistborn    (justIf isTwinborn ferring)
-      feruchemist = Halfborn $ Feruchemist (justIf isTwinborn misting)
+  let mistborn    = Halfborn . Mistborn    $ justIf isTwinborn ferring
+      feruchemist = Halfborn . Feruchemist $ justIf isTwinborn misting
       twinborn    = mkTwinborn misting ferring
 
   (halfborn, singleborn) ← coinflip (mistborn,    Singleborn $ Misting misting)
@@ -89,9 +95,8 @@ mkAbilitiesObtained ps = do
   spikeNum  ← exponentiallyRarer ps.spike
   medallNum ← exponentiallyRarer ps.medall
   spikes    ← sequence $ rand <$ drop 1 [0..spikeNum]
-  medalls   ← sequence $ rand <$ drop 1 [0..medallNum]
+  medallF   ← sequence $ rand <$ drop 1 [0..medallNum]
   grenade   ← randBool ps.grenade
   (spikedA, spikedF) ← randomlySplit spikes
-  (medallA, medallF) ← randomlySplit medalls
 
-  pure $ AbilitiesObtained { spikedA, spikedF, medallA, medallF, grenade }
+  pure $ AbilitiesObtained { spikedA, spikedF, medallF, grenade }
