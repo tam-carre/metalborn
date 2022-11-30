@@ -57,16 +57,19 @@ config =
     , NoUnused.Patterns.rule
     , NoUnused.Variables.rule
     , Simplify.rule Simplify.defaults
-    , RecordFieldHelper.GenerateUsed.rule
-        { generator = RecordFieldHelper.GenerateUsed.accessors
-        , generateIn = ( "Field", [] )
-        }
-    , VariantHelper.GenerateUsed.rule
-        { build =
-            VariantHelper.GenerateUsed.accessors
-                { valuesCombined = VariantHelper.GenerateUsed.valuesRecord }
-        , nameInModuleInternal = VariantHelper.GenerateUsed.variantAfter "on"
-        , nameInModuleExternal = VariantHelper.GenerateUsed.variant
-        , generationModuleIsVariantModuleDotSuffix = "On"
-        }
+
+    -- Lens generator not yet compatible with erlandsona/elm-accessors
+    -- , RecordFieldHelper.GenerateUsed.rule
+    -- { generator = RecordFieldHelper.GenerateUsed.accessors
+    -- , generateIn = ( "Lenses", [] )
+    -- }
+    -- , VariantHelper.GenerateUsed.rule
+    -- { build =
+    -- VariantHelper.GenerateUsed.accessors
+    -- { valuesCombined = VariantHelper.GenerateUsed.valuesRecord }
+    -- , nameInModuleInternal = VariantHelper.GenerateUsed.variantAfter "on"
+    -- , nameInModuleExternal = VariantHelper.GenerateUsed.variant
+    -- , generationModuleIsVariantModuleDotSuffix = "On"
+    -- }
     ]
+        |> List.map (Rule.ignoreErrorsForFiles [ "src/API.elm", "src/Lenses.elm" ])
