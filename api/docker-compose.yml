@@ -1,0 +1,16 @@
+# docker-compose.yml
+version: "3.3"
+services:
+  postgres:
+    build:
+      context: ./docker
+      dockerfile: db.Dockerfile
+    image: postgres:15
+    ports:
+      - "15432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - /root/database:/var/lib/postgresql/data

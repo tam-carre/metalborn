@@ -2,7 +2,8 @@
 
 Metalborn data is stored using PostgreSQL.
 
-For reference or reproducibility, see [`./db_schema_dump.sql`](./db_schema_dump.sql).
+For reference, or running your own database, see [`../api/docker/dbSchema.sql`](../api/docker/dbSchema.sql).
+You can just run the docker container as explained in [`../api/README.md`](../api/README.md) though.
 
 ## Normalization & SQL constraints
 

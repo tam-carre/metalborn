@@ -2,20 +2,21 @@ module Config (Config (..), appConf) where
 
 import Database.PostgreSQL.Simple (ConnectInfo (..))
 
-import Secrets qualified
--- ^ Not version controlled obv
-
 ----------------------------------------------------------------------------------------------------
 
 -- ATM config is hardcoded
 
 newtype Config
-  = Config
-    { pg ∷ ConnectInfo
-    }
+  = Config { pg ∷ ConnectInfo }
   deriving (Generic)
 
 appConf ∷ Config
 appConf = Config
-  { pg = ConnectInfo Secrets.pgHost 5432 "tam-carre" Secrets.pgPw "tam-carre/metalborn"
+  { pg = ConnectInfo
+    { connectHost     = "localhost"
+    , connectPort     = 15432
+    , connectUser     = "postgres"
+    , connectPassword = "postgres"
+    , connectDatabase = "postgres"
+    }
   }
