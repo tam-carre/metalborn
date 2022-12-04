@@ -1,7 +1,13 @@
-module Gender exposing (fromStr, toLetter)
+module API.Gender exposing (GenderData, fromStr, info)
 
 import API
 import Dict
+
+
+type alias GenderData =
+    { letter : String
+    , str : String
+    }
 
 
 fromStr : String -> Maybe API.Gender
@@ -13,14 +19,14 @@ fromStr str =
         ]
 
 
-toLetter : API.Gender -> String
-toLetter gender =
+info : API.Gender -> GenderData
+info gender =
     case gender of
         API.Male ->
-            "M"
+            { letter = "M", str = "Male" }
 
         API.Female ->
-            "F"
+            { letter = "F", str = "Female" }
 
         API.Other ->
-            "O"
+            { letter = "O", str = "Other" }

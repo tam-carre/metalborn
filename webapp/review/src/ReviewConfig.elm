@@ -12,6 +12,7 @@ when inside the directory containing this file.
 -}
 
 import Docs.ReviewAtDocs
+import Elm.CodeGen as CodeGen
 import NoConfusingPrefixOperator
 import NoDebug.Log
 import NoDebug.TodoOrToString
@@ -42,11 +43,13 @@ config =
     , NoDebug.Log.rule
     , NoDebug.TodoOrToString.rule
         |> Rule.ignoreErrorsForDirectories [ "tests/" ]
+        -- WIPs go here, don't forget to remove when done
+        |> Rule.ignoreErrorsForFiles [ "src/Character.elm", "src/Main.elm" ]
     , NoExposingEverything.rule
     , NoImportingEverything.rule []
     , NoMissingTypeAnnotation.rule
-    , NoMissingTypeAnnotationInLetIn.rule
     , NoMissingTypeExpose.rule
+        |> Rule.ignoreErrorsForFiles [ "src/Main.elm" ]
     , NoSimpleLetBody.rule
     , NoPrematureLetComputation.rule
     , NoUnused.CustomTypeConstructors.rule []
@@ -57,19 +60,38 @@ config =
     , NoUnused.Patterns.rule
     , NoUnused.Variables.rule
     , Simplify.rule Simplify.defaults
-
-    -- Lens generator not yet compatible with erlandsona/elm-accessors
-    -- , RecordFieldHelper.GenerateUsed.rule
-    -- { generator = RecordFieldHelper.GenerateUsed.accessors
-    -- , generateIn = ( "Lenses", [] )
-    -- }
-    -- , VariantHelper.GenerateUsed.rule
-    -- { build =
-    -- VariantHelper.GenerateUsed.accessors
-    -- { valuesCombined = VariantHelper.GenerateUsed.valuesRecord }
-    -- , nameInModuleInternal = VariantHelper.GenerateUsed.variantAfter "on"
-    -- , nameInModuleExternal = VariantHelper.GenerateUsed.variant
-    -- , generationModuleIsVariantModuleDotSuffix = "On"
-    -- }
+    , RecordFieldHelper.GenerateUsed.rule
+        { generator = erlandsonaV4LensGen
+        , generateIn = ( "Fields", [] )
+        }
     ]
-        |> List.map (Rule.ignoreErrorsForFiles [ "src/API.elm", "src/Lenses.elm" ])
+        |> List.map (Rule.ignoreErrorsForFiles [ "src/API.elm" ])
+
+
+erlandsonaV4LensGen : RecordFieldHelper.GenerateUsed.FieldLensGenerator
+erlandsonaV4LensGen =
+    { imports =
+        [ CodeGen.importStmt [ "Accessors" ] Nothing <|
+            (Just << CodeGen.exposeExplicit)
+                [ CodeGen.funExpose "lens"
+                , CodeGen.typeOrAliasExpose "Lens"
+                ]
+        ]
+    , declaration =
+        \{ fieldName } ->
+            { documentation = Nothing
+            , name = fieldName
+            , annotation =
+                (Just << CodeGen.typed "Lens") <|
+                    CodeGen.typeVar "ls"
+                        :: CodeGen.extRecordAnn "r" [ ( fieldName, CodeGen.typeVar "a" ) ]
+                        :: List.map CodeGen.typeVar [ "a", "x", "y" ]
+            , implementation =
+                CodeGen.construct "lens"
+                    [ CodeGen.string (String.cons '.' fieldName)
+                    , (RecordFieldHelper.GenerateUsed.functionsForField fieldName).access
+                    , CodeGen.lambda (List.map CodeGen.varPattern [ "rec", "val" ]) <|
+                        CodeGen.update "rec" [ ( fieldName, CodeGen.val "val" ) ]
+                    ]
+            }
+    }

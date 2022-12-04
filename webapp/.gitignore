@@ -3,4 +3,3 @@ node_modules/
 
 # Codegen
 src/API.elm
-src/Field.elm
