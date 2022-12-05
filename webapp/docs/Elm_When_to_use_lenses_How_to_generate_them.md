@@ -98,6 +98,9 @@ capitalizeStreetName =
 
 - Run `elm-review --fix-all` at the Elm project root
 - The lenses `address`, `street` and `name` are now exported by `src/Fields.elm`
+    - If you're currently working on a commit you might have other errors that
+      you don't want to fix yet. In that case use `elm-review --fix` and
+      manually approve each fix.
 
 If you wish to learn more about how the `elm-review` rule works, check out
 [elm-review-missing-record-field-lens](https://package.elm-lang.org/packages/lue-bird/elm-review-missing-record-field-lens/2.1.0/)

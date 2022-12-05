@@ -1,5 +1,9 @@
 module Fields exposing (character, ctx, requestName)
 
+{-| For information about usage and generation of lenses in this project,
+please read `../docs/Elm_When_to_use_lenses_How_to_generate_them.md`
+-}
+
 import Accessors exposing (Lens, lens)
 
 

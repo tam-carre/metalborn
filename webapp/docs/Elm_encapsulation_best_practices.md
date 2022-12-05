@@ -47,7 +47,7 @@ The `Page` type formalizes what a page module should export, defined like this:
 type alias Page model msg deps =
     { title : model -> String
     , init : deps -> ( model, Cmd msg )
-    , update : msg -> model -> ( model, Cmd msg )
+    , update : Ctx -> msg -> model -> ( model, Cmd msg )
     , view : Ctx -> model -> Element msg
     }
 ```
@@ -66,7 +66,12 @@ type Ctx
 
 
 type alias Internal =
-    { device : Device }
+    { device : Device
+    , nkey : Nav.Key
+    , previousRoute : Maybe Route
+    , route : Maybe Route
+    }
+
 ```
 
 ```elm

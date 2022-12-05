@@ -3,12 +3,13 @@ module Page.Home exposing (Model {- OPAQUE -}, Msg {- OPAQUE -}, page)
 import API
 import API.Gender as Gender
 import Accessors exposing (over)
-import Anim exposing (delayFadeIn, fadeIn, fadeInFast)
+import Anim exposing (fadeInFast, seq, seqAttrs, seqFadeIns)
 import Ctx exposing (Ctx)
 import Element exposing (Element, centerX, text)
 import Fields as F
 import Page exposing (Page)
-import Palette exposing (responsive, spacing)
+import Palette exposing (paddingY, responsive, spacing)
+import Route
 import UI
 import Utils exposing (noCmd)
 
@@ -52,8 +53,8 @@ type Msg
     = NameInputted String
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg (Model model) =
+update : Ctx -> Msg -> Model -> ( Model, Cmd Msg )
+update _ msg (Model model) =
     case msg of
         NameInputted newName ->
             ( model |> over F.requestName (processNameInput newName) |> Model
@@ -79,12 +80,27 @@ processNameInput newName oldName =
 
 view : Ctx -> Model -> Element Msg
 view ctx (Model model) =
-    Element.column [ (responsive ctx spacing).m ]
-        [ (fadeIn [] << UI.narration)
-            "“You arrive at the promised location. The rumored coppermind—a statue of Harmony—stands at the center. You touch the strange metalmind. As expected, you are able to sense its contents immediately.”"
-        , nameAndGenderInput model
-        , delayFadeIn [ centerX ] <| UI.actionLink "Tap random memory" "/character"
-        , delayFadeIn [ centerX ] <| UI.actionLink "Tamper with statue" "/custom_probabilities"
+    seqFadeIns "HOME_PAGE" [ UI.contentColumn ctx ] <|
+        [ (seq << UI.narration) <|
+            case Ctx.previousRoute ctx of
+                Just (Route.Character name _) ->
+                    "Impressively, the coppermind did contain information about " ++ name ++ ". You consider what to do next."
+
+                Just Route.RandomCharacter ->
+                    "“Intrigued by the unexpected information which has entered your mind, you ponder for a while.”"
+
+                Just Route.CustomProbabilities ->
+                    "You revert the coppermind statue back to normal. The warped energy wanes."
+
+                _ ->
+                    "“You arrive at the promised location. The rumored coppermind—a statue of Harmony—stands at the center of the site. You touch the strange metalmind. As expected, you are able to sense its contents immediately.”"
+        , (seqAttrs [ centerX, (responsive ctx paddingY).s ] << Element.column [ UI.contentColumn ctx ])
+            [ nameAndGenderInput model
+            , UI.actionLink "Tap random memory" Route.RandomCharacter
+            , UI.actionLink "Tamper with statue" Route.CustomProbabilities
+            , UI.actionLinkExternal "Investigate site's origin"
+                "https://github.com/tam-carre/metalborn"
+            ]
         ]
 
 
@@ -94,7 +110,7 @@ might be moved to `UI.elm` and re-used on different pages
 nameAndGenderInput : Internal -> Element Msg
 nameAndGenderInput model =
     Element.column [ centerX, spacing.s ]
-        [ delayFadeIn [ centerX ] <| UI.nameInput NameInputted model.requestName
+        [ UI.nameInput NameInputted model.requestName
         , genderLinks model
         ]
 
@@ -103,8 +119,7 @@ genderLinks : Internal -> Element msg
 genderLinks model =
     let
         genderLink name gender =
-            UI.actionLink (Gender.info gender).str
-                ("/character/" ++ name ++ "/" ++ (Gender.info gender).str)
+            UI.actionLink (Gender.info gender).str <| Route.Character name gender
     in
     case model.requestName of
         Just name ->

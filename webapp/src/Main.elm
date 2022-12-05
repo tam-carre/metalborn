@@ -1,7 +1,5 @@
 module Main exposing (main)
 
-import API
-import API.Gender as Gender
 import Accessors exposing (over)
 import Browser exposing (Document)
 import Browser.Dom exposing (Viewport, getViewport)
@@ -17,10 +15,10 @@ import Page exposing (Page)
 import Page.Character as Character
 import Page.Home as Home
 import Palette exposing (bgColor, fontColor, fontSize, padding, paddingY, responsive, spacing, theme)
+import Route
 import Task
 import Url exposing (Url)
-import Url.Parser as UP exposing ((</>))
-import Utils exposing (noCmd)
+import Utils exposing (addCmd, noCmd)
 
 
 main : Program () Model Msg
@@ -40,8 +38,7 @@ main =
 
 
 type alias Model =
-    { nkey : Nav.Key
-    , ctx : Ctx
+    { ctx : Ctx
     , pageModel : PageModel
     }
 
@@ -53,13 +50,11 @@ type PageModel
 
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url nkey =
-    { nkey = nkey
-    , ctx = Ctx.init
+    { ctx = Ctx.init nkey
     , pageModel = (HomeModel << Tuple.first) <| Home.page.init ()
     }
         |> goToRouteFromUrl url
-        |> Tuple.mapSecond
-            (\cmd -> Cmd.batch [ cmd, Task.perform ViewportQueried getViewport ])
+        |> addCmd (Task.perform ViewportQueried getViewport)
 
 
 
@@ -79,16 +74,9 @@ type PageMsg
     | CharacterMsg Character.Msg
 
 
-type Route
-    = RouteHome
-    | RouteCharacter API.Name API.Gender
-    | RouteRandomCharacter
-    | RouteCustomProbabilities
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg =
-    case msg of
+update msg model =
+    (case msg of
         UrlChanged url ->
             goToRouteFromUrl url
 
@@ -103,36 +91,26 @@ update msg =
 
         PageMsg pageMsg ->
             updatePage pageMsg
+    )
+        model
 
 
 goToRouteFromUrl : Url -> Model -> ( Model, Cmd Msg )
 goToRouteFromUrl url =
-    let
-        routes =
-            [ UP.map RouteCharacter <|
-                UP.s "character"
-                    </> UP.string
-                    </> UP.custom "GENDER" Gender.fromStr
-            , UP.map RouteRandomCharacter <| UP.s "character"
-            , UP.map RouteCustomProbabilities <| UP.s "custom_probabilities"
-            ]
+    over F.ctx (Ctx.updateRoute <| Route.fromUrl url)
+        >> (case Route.fromUrl url of
+                Route.Home ->
+                    homeToMain <| Home.page.init ()
 
-        route =
-            Maybe.withDefault RouteHome <|
-                UP.parse (UP.oneOf routes) url
-    in
-    case route of
-        RouteHome ->
-            homeToMain <| Home.page.init ()
+                Route.Character name gender ->
+                    charaToMain <| Character.page.init (Just ( name, gender ))
 
-        RouteCharacter name gender ->
-            charaToMain <| Character.page.init (Just ( name, gender ))
+                Route.RandomCharacter ->
+                    charaToMain <| Character.page.init Nothing
 
-        RouteRandomCharacter ->
-            charaToMain <| Character.page.init Nothing
-
-        RouteCustomProbabilities ->
-            Debug.todo "not created yet"
+                Route.CustomProbabilities ->
+                    Debug.todo "not created yet"
+           )
 
 
 loadPage : Browser.UrlRequest -> Model -> ( Model, Cmd msg )
@@ -140,7 +118,7 @@ loadPage urlRequest model =
     ( model
     , case urlRequest of
         Browser.Internal url ->
-            Nav.pushUrl model.nkey <| Url.toString url
+            Ctx.pushUrl model.ctx url
 
         Browser.External href ->
             Nav.load href
@@ -154,15 +132,17 @@ updateDevice w h =
 
 updatePage : PageMsg -> Model -> ( Model, Cmd Msg )
 updatePage pageMsg ({ pageModel } as model) =
-    case ( pageMsg, pageModel ) of
+    (case ( pageMsg, pageModel ) of
         ( HomeMsg homeMsg, HomeModel homeModel ) ->
-            homeToMain (Home.page.update homeMsg homeModel) model
+            homeToMain (Home.page.update model.ctx homeMsg homeModel)
 
         ( CharacterMsg charaMsg, CharacterModel charaModel ) ->
-            charaToMain (Character.page.update charaMsg charaModel) model
+            charaToMain (Character.page.update model.ctx charaMsg charaModel)
 
         _ ->
-            noCmd model
+            noCmd
+    )
+        model
 
 
 homeToMain : ( Home.Model, Cmd Home.Msg ) -> Model -> ( Model, Cmd Msg )
@@ -218,7 +198,7 @@ siteLayout ctx content =
                 , Font.shadow { offset = ( 0, 0 ), blur = 8, color = theme.bg }
                 ]
                 [ (Element.el [ fontSizeResp.l, Font.bold, centerX, paddingY.xs ] << text)
-                    "METALBORN"
+                    "METALBORN.IO"
                 , Element.el [ fontSizeResp.m, centerX, paddingY.s ] <|
                     Element.paragraph [ Font.center ]
                         [ text "A "
@@ -226,8 +206,19 @@ siteLayout ctx content =
                         , text " character generator"
                         ]
                 ]
+
+        siteFont =
+            Font.family
+                [ Font.external
+                    { name = "Lato"
+                    , url = "https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;1,400&display=swap"
+
+                    --, url = "https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500&display=swap"
+                    }
+                , Font.sansSerif
+                ]
     in
-    Element.layout [ bgColor.bg, fontColor.fg, paddingResp.m ] <|
+    Element.layout [ bgColor.bg, fontColor.fg, paddingResp.m, siteFont ] <|
         Element.column [ centerX, spacingResp.s ]
             [ Element.link [ centerX ] { url = "/", label = siteHeader }
             , Element.el

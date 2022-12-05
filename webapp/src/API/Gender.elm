@@ -7,6 +7,7 @@ import Dict
 type alias GenderData =
     { letter : String
     , str : String
+    , symbol : String
     }
 
 
@@ -23,10 +24,10 @@ info : API.Gender -> GenderData
 info gender =
     case gender of
         API.Male ->
-            { letter = "M", str = "Male" }
+            { letter = "M", str = "Male", symbol = "♂" }
 
         API.Female ->
-            { letter = "F", str = "Female" }
+            { letter = "F", str = "Female", symbol = "♀" }
 
         API.Other ->
-            { letter = "O", str = "Other" }
+            { letter = "O", str = "Other", symbol = "" }
