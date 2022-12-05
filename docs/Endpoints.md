@@ -42,7 +42,7 @@
 - Example (`application/json;charset=utf-8`, `application/json`):
 
 ```javascript
-["Kaladin","Male",[{"Singleborn":{"Misting":"Coinshot"}},{"spikedA":[],"spikedF":[],"medallF":[],"grenade":false}],[{"AllomancyBlock":"**Kaladin** is a **Coinshot**: he can use Allomantic **Steel**. **Coinshots** use their Steel sight to detect and Push metals away in a straight line. They can use this ability to fly through the air by Pushing metals placed on the ground. Coinshots are among the deadliest Metalborn, capable of enhancing the power of gunfire or use small metallic objects (such as coins) as weapons."}]]
+["Kaladin","Male",[{"Singleborn":{"Misting":"Coinshot"}},{"spikedA":[],"spikedF":[],"medallF":[],"grenade":false}],[{"AllomancyBlock":"**Kaladin** is a **Coinshot**: he can use **Allomantic Steel**. Coinshots use their Steel sight to detect and Push metals away in a straight line. They can use this ability to fly through the air by Pushing metals placed on the ground. Coinshots are among the deadliest Metalborn, capable of enhancing the power of gunfire or use small metallic objects (such as coins) as weapons."}]]
 ```
 
 ## POST /api/randomCharacter
@@ -85,6 +85,6 @@
 - Example (`application/json;charset=utf-8`, `application/json`):
 
 ```javascript
-["Kaladin","Male",[{"Singleborn":{"Misting":"Coinshot"}},{"spikedA":[],"spikedF":[],"medallF":[],"grenade":false}],[{"AllomancyBlock":"**Kaladin** is a **Coinshot**: he can use Allomantic **Steel**. **Coinshots** use their Steel sight to detect and Push metals away in a straight line. They can use this ability to fly through the air by Pushing metals placed on the ground. Coinshots are among the deadliest Metalborn, capable of enhancing the power of gunfire or use small metallic objects (such as coins) as weapons."}]]
+["Kaladin","Male",[{"Singleborn":{"Misting":"Coinshot"}},{"spikedA":[],"spikedF":[],"medallF":[],"grenade":false}],[{"AllomancyBlock":"**Kaladin** is a **Coinshot**: he can use **Allomantic Steel**. Coinshots use their Steel sight to detect and Push metals away in a straight line. They can use this ability to fly through the air by Pushing metals placed on the ground. Coinshots are among the deadliest Metalborn, capable of enhancing the power of gunfire or use small metallic objects (such as coins) as weapons."}]]
 ```
 

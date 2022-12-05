@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 
--- | TODO: Simplify the DB module. TH + records + better normalization strategy?
+-- | For documentation on this module, please read `../../../docs/DB.md`
+-- | TODO: Simplify the DB module. TH + records ?
 module App.DB (createCharacter, deleteCharacter, getCharacter) where
 
 import App                             (App, AppError (..), DBError (..), intercept)

@@ -3301,7 +3301,7 @@
     lhs: "not . any f"
     rhs: "Lenses.none f"
 - warn:
-    lhs: "y  >> pure x"
+    lhs: "y >> pure x"
     rhs: "y $> x"
 - warn:
     lhs: "y ≫  pure x"
