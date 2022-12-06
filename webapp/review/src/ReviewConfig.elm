@@ -54,9 +54,7 @@ config =
     , NoPrematureLetComputation.rule
     , NoUnused.CustomTypeConstructors.rule []
     , NoUnused.CustomTypeConstructorArgs.rule
-
-    -- Turn this back on when the CI pipeline generates API.elm
-    -- , NoUnused.Dependencies.rule
+    , NoUnused.Dependencies.rule
     , NoUnused.Exports.rule
     , NoUnused.Parameters.rule
     , NoUnused.Patterns.rule

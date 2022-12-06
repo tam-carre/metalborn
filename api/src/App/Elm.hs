@@ -1,6 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes, ScopedTypeVariables #-}
 
-module App.Elm (generateElmCode) where
+module App.Elm (main, generateElmCode) where
 
 import App.Character             (Character)
 import App.Character.Abilities   (Abilities, AbilitiesObtained, AbilityProbabilities)
@@ -15,6 +15,9 @@ import Elm.TyRep                 (IsElmDefinition)
 import Servant.Elm               (DefineElm (..), defElmImports, generateElmModule)
 
 ----------------------------------------------------------------------------------------------------
+
+main ∷ IO ()
+main = generateElmCode
 
 generateElmCode ∷ IO ()
 generateElmCode = generateElmModule [ "API" ] defElmImports "../webapp/src" sharedTypes siteAPI

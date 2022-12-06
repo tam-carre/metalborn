@@ -11,15 +11,14 @@ you can change the database connection data in [`src/Config.hs`](./src/Config.hs
 ### Build
 
 Install [GHCup](https://www.haskell.org/ghcup/) and use `ghcup tui` to make sure
-GHC 9.2.4 and Cabal are installed. Then run inside this directory:
+GHC 9.2.4 and Cabal are installed. Then optionally install `hpack`.
 
 ```sh
 cabal update
 cabal install hpack
-hpack
 ```
 
-`hpack` will generate `metalborn-api.cabal` which is not version controlled.
+You'll need to run `hpack` when you edit `package.yaml`, rename a module, or create a new one. It will generate a new `metalborn-api.cabal` file -- the latter is still version controlled so that CI pipelines do not need to install `hpack` which can take a while.
 
 Then run:
 
@@ -49,6 +48,9 @@ You can then check that the database is up and accessible by running:
 ```
 curl -H 'Content-Type: application/json' localhost:8081/api/character/ -d '["Kaladin", "Male"]
 ```
+
+Be aware that you can generate a searchable documentation of the module tree and
+every module's exported functions' types and doc comments by running `cabal haddock`.
 
 ## Project map
 

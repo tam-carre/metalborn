@@ -8,7 +8,6 @@ import App.Character.Metalborn   (Ferring (..), Halfborn (..), Metal (..), Metal
 import App.Character.Name        (Name (Name))
 import App.DB                    qualified as DB
 import App.Gender                (Gender (Male))
-import Secrets qualified
 import Test.Hspec                (Spec, beforeAll, it, shouldBe)
 
 ----------------------------------------------------------------------------------------------------
@@ -17,7 +16,7 @@ import Test.Hspec                (Spec, beforeAll, it, shouldBe)
 -- If one fails, the remaining ones will not be run.
 spec ∷ Spec
 spec = beforeAll (newIORef PreviousTestsSuccessful) do
-  let dummyName   = Name Secrets.dummyCharacterName
+  let dummyName   = Name "TEST_CHARACTER_NAME_FSWTRCRSPTWF"
       dummyGender = Male
       dummyBlocks = [AllomancyBlock "dummy allo", FeruchemyBlock "dummy feru"]
       dummyAbils  = Abilities (Just . Halfborn . Mistborn $ Just Skimmer)
