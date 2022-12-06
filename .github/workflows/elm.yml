@@ -15,3 +15,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
        working-directory: ./webapp
+    - uses: sparksp/elm-format-action@v1
+      with: 
+        working-directory: ./webapp
