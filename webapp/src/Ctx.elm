@@ -23,9 +23,7 @@ init nkey =
     Ctx
         { device = { class = Desktop, orientation = Landscape }
         , nkey = nkey
-        , previousRoute = Nothing
-        , route = Nothing
-        }
+        , previousRoute = Nothing        , route = Nothing }
 
 
 updateDevice : Int -> Int -> Ctx -> Ctx
