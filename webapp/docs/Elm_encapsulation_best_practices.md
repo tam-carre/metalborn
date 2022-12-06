@@ -1,6 +1,7 @@
 # Elm encapsulation best practices
 
-Encapsulation in Elm is a topic that I haven't come across much, and I ended up learning through experience what I personally find effective. Here are the practices I apply on this project and writing Elm in general.
+Might be basic to experienced Elmers, but it took me real life experience to get
+a good grasp on this topic. Here are some encapsulation practices I apply on this project:
 
 ## Goals
 
@@ -22,7 +23,7 @@ The last point is more of a stylistic concern, but one I seem to oddly care abou
 
 #### Predetermined set of exports
 
-This is what a page's exports should look like:
+A metalborn.io page module's exports should look like:
 
 ```elm
 module Page.Home exposing (Model {- OPAQUE -}, Msg {- OPAQUE -}, page)
@@ -52,6 +53,26 @@ type alias Page model msg deps =
     }
 ```
 
+If a page's dependencies are a record type then that record type may be exposed:
+
+```elm
+module Page.Home exposing (Deps, Model {- OPAQUE -}, Msg {- OPAQUE -}, page)
+
+page : Page Model Msg Deps
+page =
+    { title = title
+    , init = init
+    , update = update
+    , view = view
+    }
+
+type alias Deps =
+    { input : Maybe ( API.Name, API.Gender )
+    , someOtherStuff : List String
+    , etc : Int
+    }
+```
+
 **If any other utility function is exported from a page module it is a sign that it should live inside some other helper module.**
 
 **Hence, any binding inside a page module other than `page` can be safely inferred by the reader to be internal!**
@@ -61,6 +82,8 @@ type alias Page model msg deps =
 For models this means something like this:
 
 ```elm
+module Ctx exposing (Ctx {- OPAQUE -})
+
 type Ctx
     = Ctx Internal
 
@@ -75,6 +98,8 @@ type alias Internal =
 ```
 
 ```elm
+module Page.Home exposing (Model {- OPAQUE -})
+
 type Model
     = Model Internal
 
@@ -103,7 +128,7 @@ exported, now or in the future.
 
 Helper modules expose helper functions, as opposed to a simple `Page`. We therefore have to be use special conventions to make it easy for readers to distinguish public APIs from module internals.
 
-This is what it looks like:
+Though it is uncommon in the Elm ecosystem, this is what I like to do:
 
 ```elm
 {-| Ensure low-level APIs remain private

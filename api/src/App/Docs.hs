@@ -14,7 +14,7 @@ apiDocs = docs siteAPI
 
 generateDocs ∷ IO ()
 generateDocs =
-  writeFile "../docs/Endpoints.md" $ apiDocsIntro ⊕ markdown apiDocs
+  writeFile "./docs/Endpoints.md" $ apiDocsIntro ⊕ markdown apiDocs
   where
   apiDocsIntro = toString $ unlines
     [ "*Notes:*"

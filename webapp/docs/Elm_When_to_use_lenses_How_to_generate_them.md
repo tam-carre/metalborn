@@ -2,7 +2,10 @@
 
 ## When to use lenses
 
-Elm code should not be clever, and should be simple. Lenses used conservatively can actually further those goals. In practice, that means mostly:
+Elm code should be as un-clever as possible by culture. The main reason why this
+project uses lenses is because I wanted to see how they fit in with Elm code.
+I keep their usage *very* conservative. Here are the main situations where
+I think they can be appropriate even in Elm code?
 
 ### Nested record updates where a nested model of the domain is the correct choice
 
@@ -12,6 +15,7 @@ it is the best representation of the domain, and Elm syntax punishes you heavily
 for it:
 
 ```elm
+setAddressNumberTo1 : Person -> Person
 setAddressNumberTo1 person =
     { person
         | address =
@@ -30,25 +34,29 @@ setAddressNumberTo1 person =
 Compare with using lenses:
 
 ```elm
+setAddressNumberTo1 : Person -> Person
 setAddressNumberTo1 person =
     person |> set (F.address << F.number) 1
 
 -- can also be eta-reduced if you'd like
+setAddressNumberTo1 : Person -> Person
 setAddressNumberTo1 =
     set (F.address << F.number) 1
 ```
 
-The syntax is not even complicated! Lens difficulty is highly overstated. Their implementation is difficult, but their basic API is very simple.
+The syntax is not even complicated! Lens implementation is difficult, but their basic API is very simple.
 
 ### Applying a function over record fields
 
 The syntax for applying a function over record fields is very expensive in Elm, even when the data is not nested:
 
 ```elm
+capitalizeLastName : Person -> Person
 capitalizeLastName person =
     { person | lastName = person.lastName |> String.toUpper }
 
 -- nested data
+capitalizeStreet : Person -> Person
 capitalizeStreet person =
     { person
         | address =
@@ -57,6 +65,7 @@ capitalizeStreet person =
     }
 
 -- or maybe
+capitalizeStreet : Person -> Person
 capitalizeStreet person =
     let
       address = person.address
@@ -67,14 +76,17 @@ capitalizeStreet person =
 Compare with using lenses:
 
 ```elm
+capitalizeLastName : Person -> Person
 capitalizeLastName person =
     person |> over F.lastName String.toUpper
 
 -- again, you can optionally eta-reduce
+capitalizeLastName : Person -> Person
 capitalizeLastName =
     over F.lastName String.toUpper
 
 -- nested data
+capitalizeStreet : Person -> Person
 capitalizeStreet =
     over (F.address << F.street) String.toUpper
 ```

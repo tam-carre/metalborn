@@ -33,13 +33,24 @@ Elm API types and functions generated.
 Starting Metalborn API server.
 ```
 
+GHC might emit error messages due to missing libraries. On Ubuntu, the following
+will cover you:
+
+```
+sudo apt update
+sudo apt install -y build-essential libgmp3-dev zlib1g-dev libpq-dev libtinfo-dev
+```
+
+On other systems, please look up how to install the libraries that GHC is asking
+you for.
+
 You can then check that the database is up and accessible by running:
 
 ```
 curl -H 'Content-Type: application/json' localhost:8081/api/character/ -d '["Kaladin", "Male"]
 ```
 
-## Project plan
+## Project map
 
 ### Coding conventions
 
@@ -82,6 +93,8 @@ just add this in `.hlint.yaml`:
 Since this is my personal project, I have some fun with `UnicodeSyntax` and
 `base-unicode-symbols`. Most of the symbols are entered with a hacky Vimscript
 search-and-replace on filesave.
+
+I use a [custom Prelude](./src/Prelude.hs) that re-exports `base-unicode-symbols`'s modules.
 
 Here's what I put in `~/.vim/after/ftplugin/haskell.vim`:
 
@@ -174,63 +187,39 @@ Here's what I put in `~/.vim/after/ftplugin/haskell.vim`:
   
 </details>
 
-### Effect handling
-
-Effects are run in this transformer stack:
-
-```
--- ./src/App.hs
-newtype App a
-  = App (ReaderT Env (ExceptT AppError IO) a)
-  deriving
-  ( Applicative
-  , Functor
-  , Monad
-  , MonadCatch
-  , MonadError AppError
-  , MonadIO
-  , MonadReader Env
-  , MonadThrow
-  )
-```
-
-The `Env` is only a DB connection at this stage.
-
 ### Tests
 
-What about testability? Well, the modules where effects in the `App` type are defined are:
+As far as testing effects go, the effectful modules in the app are:
 
-- `App.DB`
-- `App.Server`
+- [`App.DB`](./src/App/DB.hs)
+- [`App.Server`](./src/App/Server.hs)
 
-That's not too much to worry about. `App.Server` is a simple Servant server;
-with Servant's strong type safety we're OK here. `App.DB` is tested using an
-integration test running against a real database! So we don't have to worry
-about using more sophisticated transformers or effect systems.
+That's not too much to worry about. [`App.Server`](./src/App/Server.hs) is a simple Servant server;
+with Servant's strong type safety we're OK here. [`App.DB`](./src/App/DB.hs) is tested in [`DbSpec`](./test/DBSpec.hs) using an integration test running against a real database.
 
-Other notable tests include `CharacterAbilitiesSpec` which ensures the randomly
-generated abilities are within expectations given the default probability settings, and `CharacterDescriptionSpec` which saves descriptions to `./test/testDescriptions.txt` for manual editing, proofreading etc.
+The main pure tests are in [`CharacterAbilitiesSpec`](./test/CharacterAbilitiesSpec.hs) which ensure the randomly generated abilities are within expectations given the default probability settings.
+
+[`CharacterDescriptionSpec`](./test/CharacterDescriptionSpec.hs) saves descriptions to `./test/testDescriptions.txt` for manual editing, proofreading etc.
 
 
 ### Domain logic
 
 The core of the domain logic lives in:
-- The random abilities generator in `App.Character.Abilities`
-- The random description generator in `App.Character.Description`
+- The random abilities generator in [`App.Character.Abilities`](./src/App/Character/Abilities.hs)
+- The random description generator in [`App.Character.Description`](./src/App/Character/Description.hs)
 
 ### Domain
 
-The core of the domain is `App.Character`:
+The core of the domain is [`App.Character`](./src/App/Character.hs):
 
 ```hs
 data Character
   = Character Name Gender Abilities [DescriptionBlock]
 ```
 
-Which branches out into (most notably) `App.Character.Abilities`, `App.Character.Metalborn` and `App.Character.Description`.
+Which branches out into (most notably) [`App.Character.Abilities`](./src/App/Character/Abilities.hs), [`App.Character.Metalborn`](./src/App/Character/Metalborn.hs) and [`App.Character.Description`](./src/App/Character/Description.hs).
 
-Here's `Abilities`:
-
+Here's `Abilities` and `Metalborn`:
 ```hs
 data Abilities
   = Abilities (Maybe Metalborn) AbilitiesObtained
@@ -242,11 +231,7 @@ data AbilitiesObtained
     , medallF ∷ [Metal]
     , grenade ∷ Bool
     }
-```
 
-Here's `Metalborn`, and `Metal`:
-
-```hs
 data Metalborn
   = Singleborn Singleborn
   | Twinborn Misting Ferring (Maybe Twinborn)

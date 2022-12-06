@@ -119,3 +119,11 @@ CHECK (
 ```
 
 Representable states are now equivalent to the Haskell encoding!
+
+## Why store anything at all
+
+I want a character to be retrievable once generated; both by saving the link to it, and by re-running the generator with the same input.
+
+That said, randomly generated characters are seeded with their name and gender, so results are always reproducible. So for now, a DB is not strictly necessary. However, if the implementation changes later on, so will results, so just in case this happens we need to save previously generated characters.
+
+Normalization, as well as saving ability breakdowns, are also not really needed right now. They might be in the future -- but also one of the main reasons was for me to practice using the PostgreSQL library `opaleye`.
