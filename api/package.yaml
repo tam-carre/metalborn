@@ -93,9 +93,24 @@ executables:
     dependencies:
     - metalborn-api
 
+  metalborn-api-codegen:
+    main:                App/Elm.hs
+    source-dirs:         src
+    ghc-options:
+    - -main-is App.Elm
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -fwrite-ide-info
+    dependencies:
+    - metalborn-api
+
 tests:
   metalborn-api-test:
     main:                Spec.hs
+    verbatim:
+      build-tool-depends:
+        hspec-discover:hspec-discover == 2.*
     source-dirs:         test
     ghc-options:
     - -threaded

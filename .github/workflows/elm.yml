@@ -1,20 +1,76 @@
-on: push
+name: Projectwide CI checks
+on:
+  pull_request:
+    branches: [ "main" ]
 jobs:
-  elm-check:
+  fe-and-be-checks:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./webapp
+
     steps:
     - uses: actions/checkout@v2
-    - run: npm i
-    - name: Add elm-review, elm and elm-format to path
+
+    - name: Setup docker compose (run Postgres DB)
+      uses: yu-ichiro/spin-up-docker-compose-action@v1
+      with:
+        file: ./api/docker-compose.yml
+
+    - name: Install GHC and Cabal
+      uses: haskell/actions/setup@v2
+      id: setup-ghc-cabal
+      with:
+        ghc-version: '9.2.4'
+
+    - name: cabal freeze
+      run: cabal freeze
+      working-directory: ./api
+
+    - name: Restore cache of ~/.cabal/store
+      uses: actions/cache@v2
+      with:
+        path: ${{ steps.setup-ghc-cabal.outputs.cabal-store }}
+        key: ${{ hashFiles('./api/cabal.project.freeze') }}
+
+    - name: Install Haskell dependencies
+      run: |
+        cabal build all --only-dependencies
+      working-directory: ./api
+
+    - name: Build Haskell executables
+      run: |
+        cabal build all
+      working-directory: ./api
+
+    - name: Run Haskell tests
+      run: |
+        cabal test all
+      working-directory: ./api
+
+    - name: Check that Haddocks build properly
+      run: cabal haddock
+      working-directory: ./api
+
+    - name: Install Elm npm deps
+      run: npm i
+      working-directory: ./webapp
+
+    - name: Copy `elm`, `elm-review`, `elm-format` to GitHub PATH
       run: npm bin >> $GITHUB_PATH
-    - uses: sparksp/elm-review-action@v1.0.9
+      working-directory: ./webapp
+
+    - name: Check Elm code is formatted with `elm-format`
+      uses: sparksp/elm-format-action@v1
+      with:
+        elm_files: |
+          ./webapp/src/
+
+    - name: Generate Elm API.elm so that elm-review doesn't think we have unused dependencies (if they're only used in API.elm)
+      run: cabal run metalborn-api-codegen
+      working-directory: ./api
+
+    - name: Check Elm code is linted with `elm-review`
+      uses: sparksp/elm-review-action@v1.0.9
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
        working-directory: ./webapp
-    - uses: sparksp/elm-format-action@v1
-      with: 
-        working-directory: ./webapp
+
