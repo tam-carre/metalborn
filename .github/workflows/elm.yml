@@ -1,0 +1,20 @@
+on: push
+jobs:
+  elm-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./webapp
+    steps:
+    - uses: actions/checkout@v2
+    - run: npm i
+    - name: Add elm-review, elm and elm-format to path
+      run: npm bin >> $GITHUB_PATH
+    - uses: sparksp/elm-review-action@v1.0.9
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+       working-directory: ./webapp
+    - uses: sparksp/elm-format-action@v1
+      with: 
+        working-directory: ./webapp
