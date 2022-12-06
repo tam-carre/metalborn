@@ -2,9 +2,7 @@
 
 ## Running
 
-Currently, the Metalborn frontend can be tested by running `elm reactor` in the `webapp` directory and visiting `http://localhost:8000/src/Main.elm`
-
-You may need to install `elm` first, look at the top of [this page](https://guide.elm-lang.org/install/elm.html) for your OS's install links.
+Currently, the Metalborn frontend can be tested by running `npm i && npx elm reactor` in the `webapp` directory and visiting `http://localhost:8000/src/Main.elm`
 
 You'll also need `./src/API.elm` which is code-generated and not version controlled. For that, you simply need to run the API server. Refer to [`/api/README.md`](../api/) for instructions.
 
