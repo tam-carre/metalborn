@@ -107,7 +107,7 @@ ending ctx =
         , width fill
         ]
         (Element.image [ width fill ]
-            { src = "../img/ending.png", description = "Decorative footer image" }
+            { src = "/img/ending.png", description = "Decorative footer image" }
         )
 
 

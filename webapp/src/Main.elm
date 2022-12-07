@@ -15,7 +15,7 @@ import Page exposing (Page)
 import Page.Character as Character
 import Page.Home as Home
 import Palette exposing (bgColor, fontColor, fontSize, padding, paddingY, responsive, spacing, theme)
-import Route
+import Route exposing (CharacterOrigin(..))
 import Task
 import Url exposing (Url)
 import Utils exposing (addCmd, noCmd)
@@ -50,7 +50,7 @@ type PageModel
 
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url nkey =
-    { ctx = Ctx.init nkey
+    { ctx = Ctx.init nkey url
     , pageModel = (HomeModel << Tuple.first) <| Home.page.init ()
     }
         |> goToRouteFromUrl url
@@ -75,8 +75,8 @@ type PageMsg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    (case msg of
+update msg =
+    case msg of
         UrlChanged url ->
             goToRouteFromUrl url
 
@@ -91,21 +91,24 @@ update msg model =
 
         PageMsg pageMsg ->
             updatePage pageMsg
-    )
-        model
 
 
 goToRouteFromUrl : Url -> Model -> ( Model, Cmd Msg )
-goToRouteFromUrl url =
-    over F.ctx (Ctx.updateRoute <| Route.fromUrl url)
-        >> (case Route.fromUrl url of
+goToRouteFromUrl url model =
+    model
+        |> over F.ctx (Ctx.updateRoute url)
+        |> (case Route.fromUrl url of
                 Route.Home ->
                     homeToMain <| Home.page.init ()
 
-                Route.Character name gender ->
-                    charaToMain <| Character.page.init (Just ( name, gender ))
+                Route.Character (InputCharacter name gender) ->
+                    if Character.dontRerouteUrlChange model.ctx then
+                        noCmd
 
-                Route.RandomCharacter ->
+                    else
+                        charaToMain <| Character.page.init (Just ( name, gender ))
+
+                Route.Character RandomCharacter ->
                     charaToMain <| Character.page.init Nothing
 
                 Route.CustomProbabilities ->
@@ -194,7 +197,7 @@ siteLayout ctx content =
                 [ centerX
                 , alignTop
                 , paddingY.m
-                , Background.uncropped "../img/ettmetalLogo.png"
+                , Background.uncropped "/img/ettmetalLogo.png"
                 , Font.shadow { offset = ( 0, 0 ), blur = 8, color = theme.bg }
                 ]
                 [ (Element.el [ fontSizeResp.l, Font.bold, centerX, paddingY.xs ] << text)
@@ -207,14 +210,10 @@ siteLayout ctx content =
                         ]
                 ]
 
+        -- Downloaded in index.html
         siteFont =
             Font.family
-                [ Font.external
-                    { name = "Lato"
-                    , url = "https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;1,400&display=swap"
-
-                    --, url = "https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500&display=swap"
-                    }
+                [ Font.typeface "Lato"
                 , Font.sansSerif
                 ]
     in
