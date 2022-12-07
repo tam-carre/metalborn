@@ -8,13 +8,9 @@ from **[Metalborn.io](https://metalborn.io/)** itself or from my GitHub profile.
 **Metalborn.io** is a choose-your-own-adventure-style character generator set in
 the **Mistborn Era 2** universe.
 
-Mistborn is a fantasy epic written by the amazing **Brandon Sanderson**, who I have been a fan of for nearly a decade. **Mistborn 1** is a great introduction to his works if you're looking for one. It's fun, not too long and sufficiently self-contained for a first taste!
+Mistborn is a fantasy epic written by the amazing **Brandon Sanderson**, who I have been a fan of for nearly a decade. **Mistborn 1** is a great introduction to his works if you're looking for one. It's fun, not too long and sufficiently self-contained for a first taste! Please note **Metalborn.io contains minor spoilers for abilities and characters revealed up to Mistborn: The Bands of Mourning**.
 
-Anyway—choose-your-own-adventure character generator. Really that just means that instead of a traditional navbar, navigation between pages is done via first-person player actions, and pages contain smart narration that differ depending on the user's past actions.
-
-Of course this is all for flavour and just some playful frills to go alongside
-generator's main purpose. "Storytelling through webdesign" seems to be a theme in my
-projects. I like to transport my visitors to imaginary worlds:
+What's a choose-your-own-adventure character generator? Really just a cheeky name for replacing the traditional navbar with first-person player actions, and RPG-like narration that differs depending on the user's past actions. Of course this is all for flavour and just some playful frills to go alongside the app's main purpose (character generation). "Storytelling through webdesign" seems to be a theme in my projects. I like to transport my visitors to imaginary worlds:
 
 - [My Yokohama Kaidashi Kikou fansite](https://alpha.cafe) is replicates the manga's feelings of nostalgia and of finding beautiful unvisited places in the countryside, with a quaint retro design that makes visitors feel like they've just stumbled upon one of the last fansites of its kind.
 - [owmal](https://owmal.alpha.cafe) translates text into dozens of languages and feels like opening a mysterious, magical knowledge vault.

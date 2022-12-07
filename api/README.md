@@ -32,7 +32,7 @@ Elm API types and functions generated.
 Starting Metalborn API server.
 ```
 
-GHC might emit error messages due to missing libraries. On Ubuntu, the following
+GHC might emit error messages due to missing C libraries. On Ubuntu, the following
 will cover you:
 
 ```
@@ -54,6 +54,79 @@ every module's exported functions' types and doc comments by running `cabal hadd
 
 ## Project map
 
+### Tests
+
+As far as testing effects go, the effectful modules in the app are:
+
+- [`App.DB`](./src/App/DB.hs)
+- [`App.Server`](./src/App/Server.hs)
+
+That's not too much to worry about. [`App.Server`](./src/App/Server.hs) is a simple Servant server;
+with Servant's strong type safety we're OK here. [`App.DB`](./src/App/DB.hs) is tested in [`DbSpec`](./test/DBSpec.hs) using an integration test running against a real database.
+
+The main pure tests are in [`CharacterAbilitiesSpec`](./test/CharacterAbilitiesSpec.hs) which ensure the randomly generated abilities are within expectations given the default probability settings.
+
+[`CharacterDescriptionSpec`](./test/CharacterDescriptionSpec.hs) saves descriptions to `./test/testDescriptions.txt` for manual editing, proofreading etc.
+
+### Technical docs
+
+- [`./docs/DB.md`](./docs/DB.md) contains some information about how data is normalized and why stuff is stored at all.
+- [`./docs/Endpoints.md`](./docs/Endpoints.md) contains automatically-generated endpoint breakdowns, but you thanks to the Elm codegen you can just use the generated functions without ever worrying about what the endpoints are and how data is serialized.
+
+### Domain logic
+
+The core of the domain logic lives in:
+- The random abilities generator in [`App.Character.Abilities`](./src/App/Character/Abilities.hs)
+- The random description generator in [`App.Character.Description`](./src/App/Character/Description.hs)
+
+### Domain
+
+The core of the domain is [`App.Character`](./src/App/Character.hs):
+
+```hs
+data Character
+  = Character Name Gender Abilities [DescriptionBlock]
+```
+
+Which branches out into (most notably) [`App.Character.Abilities`](./src/App/Character/Abilities.hs), [`App.Character.Metalborn`](./src/App/Character/Metalborn.hs) and [`App.Character.Description`](./src/App/Character/Description.hs).
+
+Here's `Abilities` and `Metalborn`:
+```hs
+data Abilities
+  = Abilities (Maybe Metalborn) AbilitiesObtained
+
+data AbilitiesObtained
+  = AbilitiesObtained
+    { spikedA ∷ [Metal]
+    , spikedF ∷ [Metal]
+    , medallF ∷ [Metal]
+    , grenade ∷ Bool
+    }
+
+data Metalborn
+  = Singleborn Singleborn
+  | Twinborn Misting Ferring (Maybe Twinborn)
+  | Halfborn Halfborn
+  | Fullborn
+
+data Singleborn
+  = Misting Misting
+  | Ferring Ferring
+
+data Halfborn
+  = Mistborn (Maybe Ferring)
+  | Feruchemist (Maybe Misting)
+
+data Misting = Coinshot | Lurcher | Rioter | Soother | Thug | Tineye | Smoker | Seeker | DuraluminGnat | AluminumGnat | Augur | Oracle | Nicroburst | Leecher | Pulser | Slider deriving
+
+data Ferring = Skimmer | Steelrunner | Sparker | Firesoul | Windwhisperer | Brute | Archivist | Sentry | Spinner | Soulbearer | Gasper | Subsumer | Trueself | Connector | Bloodmaker | Pinnacle 
+
+-- https://www.17thshard.com/forum/topic/97725-twinborn-names/
+data Twinborn = EagleEye | Catcher | Monitor | Quickwit | Keeneye | Hefter | Sprinter | Sooner | Scrapper | Bruteblood | Marathoner | Scaler | Deader | Guardian | Navigator | Stalwart | Sharpshooter | Crasher | Swift | Shroud | Bigshot | Luckshot | Cloudtoucher | Copperkeep | Boiler | Ghostwalker | Shelter | Masker | Sentinel | Hazedodger | Metalmapper | Sleepless | Pulsewise | Stalker | Strongarm | Mastermind | Loudmouth | Zealot | Highroller | Instigator | Schemer | Cooler | Icon | Pacifier | Slick | Resolute | Puremind | Friendly | Metalbreaker | Ringer | Sapper | Gulper | Booster | BurstTicker | Enabler | Soulburst | Cohort | Chronicler | Vessel | Timeless | Introspect | Whimflitter | Foresight | Flicker | Charmed | Visionary | Plotter | Yearspanner | Chrysalis | Spotter | Blur | Assessor | Flashwit | Monument | Constant | Transcendent | Sated 
+
+data Metal = Iron | Steel | Tin | Pewter | Zinc | Brass | Copper | Bronze | Cadmium | Bendalloy | Gold | Electrum | Chromium | Nicrosil | Aluminum | Duralumin
+```
+
 ### Coding conventions
 
 #### Lenses
@@ -61,36 +134,7 @@ every module's exported functions' types and doc comments by running `cabal hadd
 This repo uses `generic-lens` and `OverloadedRecordDot` on a per-file basis.
 I wrote [a simple introduction to `generic-lens`](https://github.com/tam-carre/generic-lens-modern-setup) in order to make it very easy to pick up.
 
-#### Use hlint to make custom combinators more discoverable
-
-It's very easy to create new hlint rules for this sort of thing. Say you create
-these functions in `App.Utils`:
-
-```hs
-posit ∷ MonadFail m ⇒ Bool → Text → m ()
-posit cond e = if cond then pass else fail (toString e)
-
-onFail ∷ l → Maybe r → Either l r
-onFail = maybeToRight
-```
-
-just add this in `.hlint.yaml`:
-
-```yaml
-- warn:
-    # other rules already ensure `pass` is used over `pure ()` and `pure` over
-    # `return` so we don't need to write any rule using `return` or `pure ()`
-    # note that placeholder variables must be only one character, e.g.
-    # `if c`, not `if cond`
-    lhs: "if c then pass else fail e"
-    rhs: "App.Utils.posit c e"
-
-- warn:
-    lhs: "maybeToRight"
-    rhs: "App.Utils.onFail"
-```
-
-### Formatted with `.stylish-haskell.yaml` and Unicode operators
+#### Formatted with `.stylish-haskell.yaml` and Unicode operators
 
 Since this is my personal project, I have some fun with `UnicodeSyntax` and
 `base-unicode-symbols`. Most of the symbols are entered with a hacky Vimscript
@@ -189,71 +233,3 @@ Here's what I put in `~/.vim/after/ftplugin/haskell.vim`:
   
 </details>
 
-### Tests
-
-As far as testing effects go, the effectful modules in the app are:
-
-- [`App.DB`](./src/App/DB.hs)
-- [`App.Server`](./src/App/Server.hs)
-
-That's not too much to worry about. [`App.Server`](./src/App/Server.hs) is a simple Servant server;
-with Servant's strong type safety we're OK here. [`App.DB`](./src/App/DB.hs) is tested in [`DbSpec`](./test/DBSpec.hs) using an integration test running against a real database.
-
-The main pure tests are in [`CharacterAbilitiesSpec`](./test/CharacterAbilitiesSpec.hs) which ensure the randomly generated abilities are within expectations given the default probability settings.
-
-[`CharacterDescriptionSpec`](./test/CharacterDescriptionSpec.hs) saves descriptions to `./test/testDescriptions.txt` for manual editing, proofreading etc.
-
-
-### Domain logic
-
-The core of the domain logic lives in:
-- The random abilities generator in [`App.Character.Abilities`](./src/App/Character/Abilities.hs)
-- The random description generator in [`App.Character.Description`](./src/App/Character/Description.hs)
-
-### Domain
-
-The core of the domain is [`App.Character`](./src/App/Character.hs):
-
-```hs
-data Character
-  = Character Name Gender Abilities [DescriptionBlock]
-```
-
-Which branches out into (most notably) [`App.Character.Abilities`](./src/App/Character/Abilities.hs), [`App.Character.Metalborn`](./src/App/Character/Metalborn.hs) and [`App.Character.Description`](./src/App/Character/Description.hs).
-
-Here's `Abilities` and `Metalborn`:
-```hs
-data Abilities
-  = Abilities (Maybe Metalborn) AbilitiesObtained
-
-data AbilitiesObtained
-  = AbilitiesObtained
-    { spikedA ∷ [Metal]
-    , spikedF ∷ [Metal]
-    , medallF ∷ [Metal]
-    , grenade ∷ Bool
-    }
-
-data Metalborn
-  = Singleborn Singleborn
-  | Twinborn Misting Ferring (Maybe Twinborn)
-  | Halfborn Halfborn
-  | Fullborn
-
-data Singleborn
-  = Misting Misting
-  | Ferring Ferring
-
-data Halfborn
-  = Mistborn (Maybe Ferring)
-  | Feruchemist (Maybe Misting)
-
-data Misting = Coinshot | Lurcher | Rioter | Soother | Thug | Tineye | Smoker | Seeker | DuraluminGnat | AluminumGnat | Augur | Oracle | Nicroburst | Leecher | Pulser | Slider deriving
-
-data Ferring = Skimmer | Steelrunner | Sparker | Firesoul | Windwhisperer | Brute | Archivist | Sentry | Spinner | Soulbearer | Gasper | Subsumer | Trueself | Connector | Bloodmaker | Pinnacle 
-
--- https://www.17thshard.com/forum/topic/97725-twinborn-names/
-data Twinborn = EagleEye | Catcher | Monitor | Quickwit | Keeneye | Hefter | Sprinter | Sooner | Scrapper | Bruteblood | Marathoner | Scaler | Deader | Guardian | Navigator | Stalwart | Sharpshooter | Crasher | Swift | Shroud | Bigshot | Luckshot | Cloudtoucher | Copperkeep | Boiler | Ghostwalker | Shelter | Masker | Sentinel | Hazedodger | Metalmapper | Sleepless | Pulsewise | Stalker | Strongarm | Mastermind | Loudmouth | Zealot | Highroller | Instigator | Schemer | Cooler | Icon | Pacifier | Slick | Resolute | Puremind | Friendly | Metalbreaker | Ringer | Sapper | Gulper | Booster | BurstTicker | Enabler | Soulburst | Cohort | Chronicler | Vessel | Timeless | Introspect | Whimflitter | Foresight | Flicker | Charmed | Visionary | Plotter | Yearspanner | Chrysalis | Spotter | Blur | Assessor | Flashwit | Monument | Constant | Transcendent | Sated 
-
-data Metal = Iron | Steel | Tin | Pewter | Zinc | Brass | Copper | Bronze | Cadmium | Bendalloy | Gold | Electrum | Chromium | Nicrosil | Aluminum | Duralumin
-```

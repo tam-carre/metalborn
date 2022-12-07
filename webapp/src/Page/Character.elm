@@ -161,7 +161,7 @@ viewCharacter ctx { urlCopied } (API.Character name gender (API.Abilities _ _) d
 
                   else
                     UI.actionBtn "Save and copy information" SaveAndCopyClicked
-                , UI.actionLink "Search new name" Route.Home
+                , UI.actionLink "Search new memory" Route.Home
                 , UI.actionLink "Tamper with coppermind" Route.CustomProbabilities
                 , UI.ending ctx
                 ]
