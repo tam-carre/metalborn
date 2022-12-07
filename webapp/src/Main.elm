@@ -194,7 +194,7 @@ siteLayout ctx content =
                 [ centerX
                 , alignTop
                 , paddingY.m
-                , Background.uncropped "../static/ettmetalLogo.png"
+                , Background.uncropped "../img/ettmetalLogo.png"
                 , Font.shadow { offset = ( 0, 0 ), blur = 8, color = theme.bg }
                 ]
                 [ (Element.el [ fontSizeResp.l, Font.bold, centerX, paddingY.xs ] << text)

@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "npx elm-live ./src/Main.elm --open --proxy-prefix=/api --proxy-host=http://localhost:8081 --dir=./static -- --output=./static/elm.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -13,6 +14,7 @@
   },
   "dependencies": {
     "elm": "^0.19.1-5",
-    "elm-format": "^0.8.5"
+    "elm-format": "^0.8.5",
+    "elm-live": "^4.0.2"
   }
 }

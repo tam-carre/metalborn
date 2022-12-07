@@ -2,9 +2,9 @@
 
 ## Running
 
-Currently, the Metalborn frontend can be tested by running `npm i && npx elm reactor` in the `webapp` directory and visiting `http://localhost:8000/src/Main.elm`
+You must first run the API server.  Refer to [`/api/README.md`](../api/) for instructions. Running the API server will additionally generate `./src/API.elm` which is not version-controlled.
 
-You'll also need `./src/API.elm` which is code-generated and not version controlled. For that, you simply need to run the API server. Refer to [`/api/README.md`](../api/) for instructions.
+Then run `npm i && npm run dev` in the `/webapp` directory (this one).
 
 ## Coding conventions
 
