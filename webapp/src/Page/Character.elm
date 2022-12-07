@@ -5,17 +5,17 @@ module Page.Character exposing (Model {- OPAQUE -}, Msg {- OPAQUE -}, dontRerout
 
 import API
 import API.Gender as Gender
-import Accessors exposing (set)
 import Anim exposing (seq, seqAttrs, seqFadeIns)
 import Ctx exposing (Ctx)
 import Element exposing (Element, centerX, column, fill, text, width)
 import Fields as F
 import Page exposing (Page)
 import Palette exposing (fontColor, fontSize, paddingTop, paddingY, responsive)
+import Ports
 import RemoteData exposing (RemoteData(..), WebData)
 import Route exposing (CharacterOrigin(..))
 import UI
-import Utils exposing (HttpResult, noCmd, receive)
+import Utils exposing (HttpResult, receive)
 
 
 page : Page Model Msg (Maybe ( API.Name, API.Gender ))
@@ -38,12 +38,17 @@ type Model
 type alias Internal =
     { input : Maybe ( API.Name, API.Gender )
     , character : WebData API.Character
+    , urlCopied : Bool
     }
 
 
 init : Maybe ( API.Name, API.Gender ) -> ( Model, Cmd Msg )
 init input =
-    ( Model { character = Loading, input = input }
+    ( Model
+        { character = Loading
+        , input = input
+        , urlCopied = False
+        }
     , case input of
         Nothing ->
             API.postApiCharacter ( Nothing, Nothing ) CharacterReceived
@@ -82,6 +87,7 @@ dontRerouteUrlChange ctx =
 
 type Msg
     = CharacterReceived (HttpResult API.Character)
+    | SaveAndCopyClicked
 
 
 update : Ctx -> Msg -> Model -> ( Model, Cmd Msg )
@@ -103,13 +109,18 @@ update ctx msg (Model model) =
                     Cmd.none
             )
 
+        SaveAndCopyClicked ->
+            ( Model { model | urlCopied = True }
+            , Ports.copyCurrentUrlToClipboard ()
+            )
+
 
 
 -- VIEW
 
 
 view : Ctx -> Model -> Element Msg
-view ctx (Model { input, character }) =
+view ctx (Model ({ input, character } as model)) =
     seqFadeIns "CHARACTER_PAGE" [ UI.narrationColumn ctx ] <|
         (case input of
             Nothing ->
@@ -127,12 +138,12 @@ view ctx (Model { input, character }) =
                 ]
         )
             ++ [ (seq << UI.narration) "A memory flows into you."
-               , (seqAttrs [ width fill ] << UI.load (viewCharacter ctx)) character
+               , (seqAttrs [ width fill ] << UI.load (viewCharacter ctx model)) character
                ]
 
 
-viewCharacter : Ctx -> API.Character -> Element msg
-viewCharacter ctx (API.Character name gender (API.Abilities _ _) descriptionBlocks) =
+viewCharacter : Ctx -> { a | urlCopied : Bool } -> API.Character -> Element Msg
+viewCharacter ctx { urlCopied } (API.Character name gender (API.Abilities _ _) descriptionBlocks) =
     seqFadeIns "CHARACTER" [ width fill, (responsive ctx paddingY).s ] <|
         [ seqAttrs
             [ (responsive ctx paddingY).s
@@ -145,7 +156,12 @@ viewCharacter ctx (API.Character name gender (API.Abilities _ _) descriptionBloc
             List.map viewDescriptionBlock descriptionBlocks
         , seqAttrs [ centerX ] <|
             Element.column [ UI.contentColumn ctx, (responsive ctx paddingTop).l ]
-                [ UI.actionLink "Search new name" Route.Home
+                [ if urlCopied then
+                    UI.mutedBtn "Copied to clipboard" SaveAndCopyClicked
+
+                  else
+                    UI.actionBtn "Save and copy information" SaveAndCopyClicked
+                , UI.actionLink "Search new name" Route.Home
                 , UI.actionLink "Tamper with coppermind" Route.CustomProbabilities
                 , UI.ending ctx
                 ]

@@ -1,4 +1,4 @@
-module UI exposing (actionLink, actionLinkExternal, contentColumn, ending, load, md, nameInput, narration, narrationColumn)
+module UI exposing (actionBtn, actionLink, actionLinkExternal, contentColumn, ending, load, md, mutedBtn, nameInput, narration, narrationColumn)
 
 import Anim exposing (transitionColorHover)
 import Ctx exposing (Ctx)
@@ -37,6 +37,19 @@ actionLink label route =
         { url = Route.url route, label = text label }
 
 
+actionBtn : String -> msg -> Element msg
+actionBtn label msg =
+    Input.button action
+        { onPress = Just msg, label = text label }
+
+
+mutedBtn : String -> msg -> Element msg
+mutedBtn label msg =
+    Input.button
+        (action ++ [ fontColor.mutedMuted, Element.mouseOver [ fontColor.mutedMuted ] ])
+        { onPress = Just msg, label = text label }
+
+
 actionLinkExternal : String -> String -> Element msg
 actionLinkExternal label url =
     Element.newTabLink action
@@ -66,6 +79,7 @@ action =
     , Element.focused [ Border.glow theme.transparent 0 ]
     , Element.mouseOver [ fontColor.accent ]
     , Element.mouseDown [ fontColor.accent ]
+    , Element.pointer
     , transitionColorHover
     ]
 
@@ -123,7 +137,7 @@ private =
     , discreetInput =
         [ fontColor.fg
         , padding.s
-        , Element.focused [ Border.glow theme.veryMuted 5 ]
+        , Element.focused [ Border.glow theme.fgGlow 5 ]
         , Element.mouseOver [ fontColor.fg ]
         ]
     , error =

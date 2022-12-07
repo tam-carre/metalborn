@@ -11,7 +11,10 @@
   <body>
     <script src="elm.js"></script>
     <script>
-      Elm.Main.init()
+      const app = Elm.Main.init()
+      app.ports.copyCurrentUrlToClipboard.subscribe(() => {
+        navigator.clipboard.writeText(window.location.href)
+      })
     </script>
   </body>
 </html>
