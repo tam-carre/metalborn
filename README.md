@@ -1,6 +1,6 @@
 # [Metalborn.io](https://metalborn.io/)
 
-(TODO: Include demo video/gif here once app is more complete)
+![Metalborn.io screencast](https://user-images.githubusercontent.com/1331748/206300829-7a2c7a87-686e-4a10-92e3-04b0974fb8cc.gif)
 
 Welcome, traveller! And thanks for checking out my pet project, whether you came
 from **[Metalborn.io](https://metalborn.io/)** itself or from my GitHub profile.
@@ -8,7 +8,9 @@ from **[Metalborn.io](https://metalborn.io/)** itself or from my GitHub profile.
 **Metalborn.io** is a choose-your-own-adventure-style character generator set in
 the **Mistborn Era 2** universe.
 
-What the choose-your-own-adventure part means really is that instead of a traditional navbar, navigation between pages is done via first-person user actions, and pages contain smart narration that differ depending on the user's past actions.
+Mistborn is a fantasy epic written by the amazing **Brandon Sanderson**, who I have been a fan of for nearly a decade. **Mistborn 1** is a great introduction to his works if you're looking for one. It's fun, not too long and sufficiently self-contained for a first taste!
+
+Anyway—choose-your-own-adventure character generator. Really that just means that instead of a traditional navbar, navigation between pages is done via first-person player actions, and pages contain smart narration that differ depending on the user's past actions.
 
 Of course this is all for flavour and just some playful frills to go alongside
 generator's main purpose. "Storytelling through webdesign" seems to be a theme in my

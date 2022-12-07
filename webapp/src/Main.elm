@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Accessors exposing (over)
 import Browser exposing (Document)
-import Browser.Dom exposing (Viewport, getViewport)
+import Browser.Dom exposing (Viewport, getViewport, setViewport)
 import Browser.Events
 import Browser.Navigation as Nav
 import Ctx exposing (Ctx)
@@ -64,6 +64,7 @@ init _ url nkey =
 type Msg
     = LinkClicked Browser.UrlRequest
     | UrlChanged Url
+    | ViewportReset
     | ViewportResized Int Int
     | ViewportQueried Viewport
     | PageMsg PageMsg
@@ -83,6 +84,9 @@ update msg =
         LinkClicked urlRequest ->
             loadPage urlRequest
 
+        ViewportReset ->
+            noCmd
+
         ViewportResized w h ->
             updateDevice w h
 
@@ -95,21 +99,25 @@ update msg =
 
 goToRouteFromUrl : Url -> Model -> ( Model, Cmd Msg )
 goToRouteFromUrl url model =
+    let
+        scrollToTop =
+            (addCmd << Task.perform (always ViewportReset)) <| setViewport 0 0
+    in
     model
         |> over F.ctx (Ctx.updateRoute url)
         |> (case Route.fromUrl url of
                 Route.Home ->
-                    homeToMain <| Home.page.init ()
+                    scrollToTop << homeToMain (Home.page.init ())
 
                 Route.Character (InputCharacter name gender) ->
                     if Character.dontRerouteUrlChange model.ctx then
                         noCmd
 
                     else
-                        charaToMain <| Character.page.init (Just ( name, gender ))
+                        scrollToTop << charaToMain (Character.page.init (Just ( name, gender )))
 
                 Route.Character RandomCharacter ->
-                    charaToMain <| Character.page.init Nothing
+                    scrollToTop << charaToMain (Character.page.init Nothing)
 
                 Route.CustomProbabilities ->
                     Debug.todo "not created yet"
