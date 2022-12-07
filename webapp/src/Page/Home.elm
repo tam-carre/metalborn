@@ -94,13 +94,15 @@ view ctx (Model model) =
 
                 _ ->
                     "“You arrive at the promised location. The rumored coppermind—a statue of Harmony—stands at the center of the site. You touch the strange metalmind. As expected, you are able to sense its contents immediately.”"
-        , (seqAttrs [ centerX, (responsive ctx paddingY).s ] << Element.column [ UI.contentColumn ctx ])
-            [ nameAndGenderInput model
-            , UI.actionLink "Tap random memory" Route.RandomCharacter
-            , UI.actionLink "Tamper with statue" Route.CustomProbabilities
-            , UI.actionLinkExternal "Investigate site's origin"
-                "https://github.com/tam-carre/metalborn"
-            ]
+        , seqAttrs [ centerX, (responsive ctx paddingY).s ] <|
+            Element.column [ UI.contentColumn ctx ]
+                [ nameAndGenderInput model
+                , UI.actionLink "Tap random memory" Route.RandomCharacter
+                , UI.actionLink "Tamper with statue" Route.CustomProbabilities
+                , UI.actionLinkExternal "Investigate site's origin"
+                    "https://github.com/tam-carre/metalborn"
+                , UI.ending ctx
+                ]
         ]
 
 

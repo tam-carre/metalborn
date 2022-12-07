@@ -96,7 +96,8 @@ load viewLoaded webdata =
             viewLoaded data
 
 
-{-| A footer is stylishly used, not sitewide, but at the end of certain seqFadeIns chains (those that feel like a flow has been completed; i.e. gharacter generations)
+{-| The footer is stylishly used at the end of certain seqFadeIns chains, and hence must
+be manually included by each page
 -}
 ending : Ctx -> Element msg
 ending ctx =
