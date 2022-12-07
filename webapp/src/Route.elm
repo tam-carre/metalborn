@@ -1,4 +1,4 @@
-module Route exposing (Route(..), fromUrl, url)
+module Route exposing (CharacterOrigin(..), Route(..), fromUrl, url)
 
 import API
 import API.Gender as Gender
@@ -9,9 +9,13 @@ import Url.Parser as UP exposing ((</>), custom, map, oneOf, s, string, top)
 
 type Route
     = Home
-    | Character API.Name API.Gender
-    | RandomCharacter
+    | Character CharacterOrigin
     | CustomProbabilities
+
+
+type CharacterOrigin
+    = RandomCharacter
+    | InputCharacter API.Name API.Gender
 
 
 {-| Typesafe string-URL builder
@@ -22,10 +26,10 @@ url route =
         Home ->
             Builder.absolute [] []
 
-        Character name gender ->
+        Character (InputCharacter name gender) ->
             Builder.absolute [ internal.paths.character, name, (Gender.info gender).str ] []
 
-        RandomCharacter ->
+        Character RandomCharacter ->
             Builder.absolute [ internal.paths.character ] []
 
         CustomProbabilities ->
@@ -40,8 +44,9 @@ fromUrl =
 routes : List (UP.Parser (Route -> a) a)
 routes =
     [ map Home top
-    , map Character <| s "character" </> string </> custom "GENDER" Gender.fromStr
-    , map RandomCharacter <| s internal.paths.character
+    , map (\name chara -> Character (InputCharacter name chara))
+        (s internal.paths.character </> string </> custom "GENDER" Gender.fromStr)
+    , map (Character RandomCharacter) <| s internal.paths.character
     , map CustomProbabilities <| s internal.paths.customProbabilities
     ]
 

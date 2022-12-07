@@ -1,5 +1,6 @@
 elm-stuff/
 node_modules/
+static/elm.js
 
 # Codegen
 src/API.elm

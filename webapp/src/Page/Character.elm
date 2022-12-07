@@ -1,21 +1,21 @@
-module Page.Character exposing (Model {- OPAQUE -}, Msg {- OPAQUE -}, page)
+module Page.Character exposing (Model {- OPAQUE -}, Msg {- OPAQUE -}, dontRerouteUrlChange, page)
 
 {-| This module is a very early stage work in progress
 -}
 
 import API
 import API.Gender as Gender
-import Accessors exposing (set)
 import Anim exposing (seq, seqAttrs, seqFadeIns)
 import Ctx exposing (Ctx)
 import Element exposing (Element, centerX, column, fill, text, width)
 import Fields as F
 import Page exposing (Page)
 import Palette exposing (fontColor, fontSize, paddingTop, paddingY, responsive)
+import Ports
 import RemoteData exposing (RemoteData(..), WebData)
-import Route
+import Route exposing (CharacterOrigin(..))
 import UI
-import Utils exposing (HttpResult, noCmd, receive)
+import Utils exposing (HttpResult, receive)
 
 
 page : Page Model Msg (Maybe ( API.Name, API.Gender ))
@@ -38,12 +38,17 @@ type Model
 type alias Internal =
     { input : Maybe ( API.Name, API.Gender )
     , character : WebData API.Character
+    , urlCopied : Bool
     }
 
 
 init : Maybe ( API.Name, API.Gender ) -> ( Model, Cmd Msg )
 init input =
-    ( Model { character = Loading, input = input }
+    ( Model
+        { character = Loading
+        , input = input
+        , urlCopied = False
+        }
     , case input of
         Nothing ->
             API.postApiCharacter ( Nothing, Nothing ) CharacterReceived
@@ -61,52 +66,53 @@ title (Model { character }) =
            )
 
 
+{-| Contexts in which a URL change should be ignored by Elm
+-}
+dontRerouteUrlChange : Ctx -> Bool
+dontRerouteUrlChange ctx =
+    case Ctx.route ctx of
+        -- If the url changes while on the route RandomCharacter it's just us
+        -- making the random character's URL copyable, we don't actually want
+        -- to reroute
+        Route.Character RandomCharacter ->
+            True
+
+        _ ->
+            False
+
+
 
 -- UPDATE
 
 
 type Msg
     = CharacterReceived (HttpResult API.Character)
+    | SaveAndCopyClicked
 
 
 update : Ctx -> Msg -> Model -> ( Model, Cmd Msg )
 update ctx msg (Model model) =
     case msg of
         CharacterReceived webdata ->
-            Tuple.second
-                ( (noCmd << Model << receive F.character webdata) model
-                , ( Model
-                        (set F.character
-                            (Success <|
-                                API.Character "Yagoo"
-                                    API.Male
-                                    (API.Abilities (Just API.Fullborn)
-                                        { spikedA = [ API.Steel ]
-                                        , spikedF = []
-                                        , medallF = []
-                                        , grenade = False
-                                        }
-                                    )
-                                    [ API.AllomancyBlock "**Yagoo** can use Allomantic **Copper**, making him a **Smoker**. **Smokers** can protect nearby Allomancers from being detected by Seekers (Bronze Allomancers). In addition, a Smoker is immune to emotional Allomancy while burning Copper. It is said to be possible for Smokers to shield others from emotional Allomancy, but the requirements to achieve this feat are not well known."
-                                    , API.FeruchemyBlock "Moreover, **Yagoo** can use Feruchemical **Duralumin**, making him a **Connector**. **Connectors** can store Connection. Filling a duraluminmind can be used to reduce other people's awareness of and friendship with the Connector, as these Spiritual Connections become stored away. Tapping it would strengthen Connections or allow the Connector to form relationships faster. Southern Scadrians use unsealed duraluminminds to enable them to communicate with others on foreign lands."
-                                    , API.TwinbornBlock "Some call the combination of a Smoker and Connector a **Shelter**. **Shelters** are Allomancers' best friends. Twinborn combinations create subtle new effects which are not well known at this time."
-                                    , API.SpikesBlock "Yagoo, after defeating Hemalurgists, came into possession of **1 Hemalurgic spike**, granting him access to, or a boost of power in, Allomantic Electrum."
-                                    ]
-                            )
-                            model
-                        )
-                  , case webdata of
-                        Ok (API.Character name gender _ _) ->
-                            if Ctx.route ctx == Just (Route.Character name gender) then
-                                Cmd.none
+            ( Model <| receive F.character webdata model
+            , case webdata of
+                Ok (API.Character name gender _ _) ->
+                    case Ctx.route ctx of
+                        Route.Character RandomCharacter ->
+                            Ctx.replaceUrlWithRoute ctx <|
+                                Route.Character (InputCharacter name gender)
 
-                            else
-                                Ctx.replaceUrlWithRoute ctx <| Route.Character name gender
-
-                        Err _ ->
+                        _ ->
                             Cmd.none
-                  )
-                )
+
+                Err _ ->
+                    Cmd.none
+            )
+
+        SaveAndCopyClicked ->
+            ( Model { model | urlCopied = True }
+            , Ports.copyCurrentUrlToClipboard ()
+            )
 
 
 
@@ -114,7 +120,7 @@ update ctx msg (Model model) =
 
 
 view : Ctx -> Model -> Element Msg
-view ctx (Model { input, character }) =
+view ctx (Model ({ input, character } as model)) =
     seqFadeIns "CHARACTER_PAGE" [ UI.narrationColumn ctx ] <|
         (case input of
             Nothing ->
@@ -132,12 +138,12 @@ view ctx (Model { input, character }) =
                 ]
         )
             ++ [ (seq << UI.narration) "A memory flows into you."
-               , (seqAttrs [ width fill ] << UI.load (viewCharacter ctx)) character
+               , (seqAttrs [ width fill ] << UI.load (viewCharacter ctx model)) character
                ]
 
 
-viewCharacter : Ctx -> API.Character -> Element msg
-viewCharacter ctx (API.Character name gender (API.Abilities _ _) descriptionBlocks) =
+viewCharacter : Ctx -> { a | urlCopied : Bool } -> API.Character -> Element Msg
+viewCharacter ctx { urlCopied } (API.Character name gender (API.Abilities _ _) descriptionBlocks) =
     seqFadeIns "CHARACTER" [ width fill, (responsive ctx paddingY).s ] <|
         [ seqAttrs
             [ (responsive ctx paddingY).s
@@ -148,11 +154,17 @@ viewCharacter ctx (API.Character name gender (API.Abilities _ _) descriptionBloc
             (text (name ++ " " ++ (Gender.info gender).symbol))
         , (seq << column [ centerX, (responsive ctx paddingY).s ]) <|
             List.map viewDescriptionBlock descriptionBlocks
-        , (seqAttrs [ centerX ] << Element.column [ UI.contentColumn ctx, (responsive ctx paddingTop).l ])
-            [ UI.actionLink "Search new name" Route.Home
-            , UI.actionLink "Tamper with coppermind" Route.CustomProbabilities
-            , UI.ending ctx
-            ]
+        , seqAttrs [ centerX ] <|
+            Element.column [ UI.contentColumn ctx, (responsive ctx paddingTop).l ]
+                [ if urlCopied then
+                    UI.mutedBtn "Copied to clipboard" SaveAndCopyClicked
+
+                  else
+                    UI.actionBtn "Save and copy information" SaveAndCopyClicked
+                , UI.actionLink "Search new name" Route.Home
+                , UI.actionLink "Tamper with coppermind" Route.CustomProbabilities
+                , UI.ending ctx
+                ]
         ]
 
 

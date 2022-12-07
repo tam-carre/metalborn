@@ -9,7 +9,7 @@ import Element exposing (Element, centerX, text)
 import Fields as F
 import Page exposing (Page)
 import Palette exposing (paddingY, responsive, spacing)
-import Route
+import Route exposing (CharacterOrigin(..))
 import UI
 import Utils exposing (noCmd)
 
@@ -83,10 +83,10 @@ view ctx (Model model) =
     seqFadeIns "HOME_PAGE" [ UI.contentColumn ctx ] <|
         [ (seq << UI.narration) <|
             case Ctx.previousRoute ctx of
-                Just (Route.Character name _) ->
+                Just (Route.Character (InputCharacter name _)) ->
                     "Impressively, the coppermind did contain information about " ++ name ++ ". You consider what to do next."
 
-                Just Route.RandomCharacter ->
+                Just (Route.Character RandomCharacter) ->
                     "“Intrigued by the unexpected information which has entered your mind, you ponder for a while.”"
 
                 Just Route.CustomProbabilities ->
@@ -94,13 +94,15 @@ view ctx (Model model) =
 
                 _ ->
                     "“You arrive at the promised location. The rumored coppermind—a statue of Harmony—stands at the center of the site. You touch the strange metalmind. As expected, you are able to sense its contents immediately.”"
-        , (seqAttrs [ centerX, (responsive ctx paddingY).s ] << Element.column [ UI.contentColumn ctx ])
-            [ nameAndGenderInput model
-            , UI.actionLink "Tap random memory" Route.RandomCharacter
-            , UI.actionLink "Tamper with statue" Route.CustomProbabilities
-            , UI.actionLinkExternal "Investigate site's origin"
-                "https://github.com/tam-carre/metalborn"
-            ]
+        , seqAttrs [ centerX, (responsive ctx paddingY).s ] <|
+            Element.column [ UI.contentColumn ctx ]
+                [ nameAndGenderInput model
+                , UI.actionLink "Tap random memory" (Route.Character RandomCharacter)
+                , UI.actionLink "Tamper with statue" Route.CustomProbabilities
+                , UI.actionLinkExternal "Investigate site's origin"
+                    "https://github.com/tam-carre/metalborn"
+                , UI.ending ctx
+                ]
         ]
 
 
@@ -119,7 +121,8 @@ genderLinks : Internal -> Element msg
 genderLinks model =
     let
         genderLink name gender =
-            UI.actionLink (Gender.info gender).str <| Route.Character name gender
+            UI.actionLink (Gender.info gender).str <|
+                Route.Character (InputCharacter name gender)
     in
     case model.requestName of
         Just name ->

@@ -1,4 +1,4 @@
-module UI exposing (actionLink, actionLinkExternal, contentColumn, ending, load, md, nameInput, narration, narrationColumn)
+module UI exposing (actionBtn, actionLink, actionLinkExternal, contentColumn, ending, load, md, mutedBtn, nameInput, narration, narrationColumn)
 
 import Anim exposing (transitionColorHover)
 import Ctx exposing (Ctx)
@@ -37,6 +37,19 @@ actionLink label route =
         { url = Route.url route, label = text label }
 
 
+actionBtn : String -> msg -> Element msg
+actionBtn label msg =
+    Input.button action
+        { onPress = Just msg, label = text label }
+
+
+mutedBtn : String -> msg -> Element msg
+mutedBtn label msg =
+    Input.button
+        (action ++ [ fontColor.mutedMuted, Element.mouseOver [ fontColor.mutedMuted ] ])
+        { onPress = Just msg, label = text label }
+
+
 actionLinkExternal : String -> String -> Element msg
 actionLinkExternal label url =
     Element.newTabLink action
@@ -66,6 +79,7 @@ action =
     , Element.focused [ Border.glow theme.transparent 0 ]
     , Element.mouseOver [ fontColor.accent ]
     , Element.mouseDown [ fontColor.accent ]
+    , Element.pointer
     , transitionColorHover
     ]
 
@@ -96,7 +110,8 @@ load viewLoaded webdata =
             viewLoaded data
 
 
-{-| A footer is stylishly used, not sitewide, but at the end of certain seqFadeIns chains (those that feel like a flow has been completed; i.e. gharacter generations)
+{-| The footer is stylishly used at the end of certain seqFadeIns chains, and hence must
+be manually included by each page
 -}
 ending : Ctx -> Element msg
 ending ctx =
@@ -106,7 +121,7 @@ ending ctx =
         , width fill
         ]
         (Element.image [ width fill ]
-            { src = "../static/ending.png", description = "Decorative footer image" }
+            { src = "/img/ending.png", description = "Decorative footer image" }
         )
 
 
@@ -122,7 +137,7 @@ private =
     , discreetInput =
         [ fontColor.fg
         , padding.s
-        , Element.focused [ Border.glow theme.veryMuted 5 ]
+        , Element.focused [ Border.glow theme.fgGlow 5 ]
         , Element.mouseOver [ fontColor.fg ]
         ]
     , error =
