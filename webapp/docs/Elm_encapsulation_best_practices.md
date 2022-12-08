@@ -33,7 +33,7 @@ module Page.Home exposing (Model {- OPAQUE -}, Msg {- OPAQUE -}, page)
 
 ```elm
 -- src/Page/Character.elm
-page : Page Model Msg (Maybe ( API.Name, API.Gender ))
+page : Page (Maybe ( API.Name, API.Gender )) Model Msg
 page =
     { title = title
     , init = init
@@ -42,10 +42,10 @@ page =
     }
 ```
 
-The `Page` type formalizes what a page module should export, defined like this:
+The `Page` type formalizes what a page module should export, very similar to `Program`.
 
 ```elm
-type alias Page model msg deps =
+type alias Page deps model msg =
     { title : model -> String
     , init : deps -> ( model, Cmd msg )
     , update : Ctx -> msg -> model -> ( model, Cmd msg )
@@ -58,7 +58,7 @@ If a page's dependencies are a record type then that record type may be exposed:
 ```elm
 module Page.Home exposing (Deps, Model {- OPAQUE -}, Msg {- OPAQUE -}, page)
 
-page : Page Model Msg Deps
+page : Page Deps Model Msg
 page =
     { title = title
     , init = init

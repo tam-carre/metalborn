@@ -18,7 +18,7 @@ import UI
 import Utils exposing (HttpResult, receive)
 
 
-page : Page Model Msg (Maybe ( API.Name, API.Gender ))
+page : Page (Maybe ( API.Name, API.Gender )) Model Msg
 page =
     { title = title
     , init = init
