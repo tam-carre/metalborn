@@ -76,8 +76,8 @@ obtainedBreakdown (Name (txt → name)) gender (AbilitiesObtained spkA spkF mdlF
         reason ⊕ " **" ⊕ show num ⊕ " " ⊕ thing ⊕ (if num > 1 then "s" else "") ⊕ "**, "
         ⊕ (case (null a, null f) of
              (False, False) → access ⊕ "**Allomantic " ⊕ oxford (map show a)
-                            ⊕ "**, as well as **Feruchemical" ⊕ oxford (map show f) ⊕ "**."
-             (False, True)  → access ⊕ "**Allomantic" ⊕ oxford (map show a) ⊕ "**."
+                            ⊕ "**, as well as **Feruchemical " ⊕ oxford (map show f) ⊕ "**."
+             (False, True)  → access ⊕ "**Allomantic " ⊕ oxford (map show a) ⊕ "**."
              (True, False)  → access ⊕ "**Feruchemical " ⊕ oxford (map show f) ⊕ "**."
              (True, True)   → ""
           )
@@ -146,7 +146,7 @@ mistbornDesc name ferr = do
     , " " ⊕ name ⊕ " is the first known natural Mistborn in centuries, a descendent of the Lord Mistborn himself."
     ]
   pure
-    ( "**" ⊕ name ⊕ "** is a Mistborn able to burn all Allomantic metals." ⊕ reasonForBeingMistborn
+    ( "**" ⊕ name ⊕ "** is a **Mistborn** able to burn all Allomantic metals." ⊕ reasonForBeingMistborn
     , ferrInfo
     )
 
@@ -165,7 +165,7 @@ feruchemistDesc name mist = do
     , " " ⊕ name ⊕ " is the first known natural Feruchemist in centuries, descendent of a reclusive Terris community in the Northern Roughs."
     ]
   pure
-    ( "**" ⊕ name ⊕ "** is a Feruchemist. " ⊕ they ⊕ " can store all Feruchemical attributes." ⊕ reasonForBeingFeruchemist
+    ( "**" ⊕ name ⊕ "** is a **Feruchemist**. " ⊕ they ⊕ " can store all Feruchemical attributes." ⊕ reasonForBeingFeruchemist
     , mistInfo
     )
 

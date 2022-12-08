@@ -1,6 +1,6 @@
 # [Metalborn.io](https://metalborn.io/)
 
-![Metalborn.io screencast](https://user-images.githubusercontent.com/1331748/206300829-7a2c7a87-686e-4a10-92e3-04b0974fb8cc.gif)
+![metalborn_demo_2022-12-08](https://user-images.githubusercontent.com/1331748/206537276-5ba4d73e-4f5b-4fa7-838b-741eb35d2c8f.gif)
 
 Welcome, traveller! And thanks for checking out my pet project, whether you came
 from **[Metalborn.io](https://metalborn.io/)** itself or from my GitHub profile.

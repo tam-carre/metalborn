@@ -4,16 +4,15 @@ module Page.Character exposing (Model {- OPAQUE -}, Msg {- OPAQUE -}, dontRerout
 -}
 
 import API
-import API.Gender as Gender
-import Anim exposing (seq, seqAttrs, seqFadeIns)
 import Ctx exposing (Ctx)
-import Element exposing (Element, centerX, column, fill, text, width)
+import Element exposing (Element, fill, width)
 import Fields as F
 import Page exposing (Page)
-import Palette exposing (fontColor, fontSize, paddingTop, paddingY, responsive)
+import Palette exposing (paddingTop, responsive)
 import Ports
 import RemoteData exposing (RemoteData(..), WebData)
 import Route exposing (CharacterOrigin(..))
+import Sequential exposing (seq, seqAttrs, seqFadeIns)
 import UI
 import Utils exposing (HttpResult, receive)
 
@@ -94,7 +93,7 @@ update : Ctx -> Msg -> Model -> ( Model, Cmd Msg )
 update ctx msg (Model model) =
     case msg of
         CharacterReceived webdata ->
-            ( Model <| receive F.character webdata model
+            ( Model (model |> receive F.character webdata)
             , case webdata of
                 Ok (API.Character name gender _ _) ->
                     case Ctx.route ctx of
@@ -138,58 +137,15 @@ view ctx (Model ({ input, character } as model)) =
                 ]
         )
             ++ [ (seq << UI.narration) "A memory flows into you."
-               , (seqAttrs [ width fill ] << UI.load (viewCharacter ctx model)) character
+               , (seqAttrs [ width fill ] << UI.load character << UI.viewCharacter ctx) <|
+                    Element.column [ UI.contentColumn ctx, (responsive ctx paddingTop).l ]
+                        [ if model.urlCopied then
+                            UI.mutedBtn "Copied to clipboard" SaveAndCopyClicked
+
+                          else
+                            UI.actionBtn "Save and copy information" SaveAndCopyClicked
+                        , UI.actionLink "Search new memory" Route.Home
+                        , UI.actionLink "Tamper with coppermind" Route.Probabilities
+                        , UI.ending ctx
+                        ]
                ]
-
-
-viewCharacter : Ctx -> { a | urlCopied : Bool } -> API.Character -> Element Msg
-viewCharacter ctx { urlCopied } (API.Character name gender (API.Abilities _ _) descriptionBlocks) =
-    seqFadeIns "CHARACTER" [ width fill, (responsive ctx paddingY).s ] <|
-        [ seqAttrs
-            [ (responsive ctx paddingY).s
-            , (responsive ctx fontSize).m
-            , fontColor.accentMuted
-            , centerX
-            ]
-            (text (name ++ " " ++ (Gender.info gender).symbol))
-        , (seq << column [ centerX, (responsive ctx paddingY).s ]) <|
-            List.map viewDescriptionBlock descriptionBlocks
-        , seqAttrs [ centerX ] <|
-            Element.column [ UI.contentColumn ctx, (responsive ctx paddingTop).l ]
-                [ if urlCopied then
-                    UI.mutedBtn "Copied to clipboard" SaveAndCopyClicked
-
-                  else
-                    UI.actionBtn "Save and copy information" SaveAndCopyClicked
-                , UI.actionLink "Search new memory" Route.Home
-                , UI.actionLink "Tamper with coppermind" Route.CustomProbabilities
-                , UI.ending ctx
-                ]
-        ]
-
-
-viewDescriptionBlock : API.DescriptionBlock -> Element msg
-viewDescriptionBlock block =
-    let
-        -- Note: in a future iteration we might style each type of block differently
-        content =
-            case block of
-                API.AllomancyBlock b ->
-                    b
-
-                API.FeruchemyBlock b ->
-                    b
-
-                API.TwinbornBlock b ->
-                    b
-
-                API.SpikesBlock b ->
-                    b
-
-                API.MedallionBlock b ->
-                    b
-
-                API.GrenadeBlock b ->
-                    b
-    in
-    Element.paragraph [ fontColor.muted ] <| [ UI.md content ]

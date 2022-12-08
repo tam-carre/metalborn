@@ -10,7 +10,7 @@ import Url.Parser as UP exposing ((</>), custom, map, oneOf, s, string, top)
 type Route
     = Home
     | Character CharacterOrigin
-    | CustomProbabilities
+    | Probabilities
 
 
 type CharacterOrigin
@@ -32,8 +32,8 @@ url route =
         Character RandomCharacter ->
             Builder.absolute [ internal.paths.character ] []
 
-        CustomProbabilities ->
-            Builder.absolute [ internal.paths.customProbabilities ] []
+        Probabilities ->
+            Builder.absolute [ internal.paths.probabilities ] []
 
 
 fromUrl : Url -> Route
@@ -44,10 +44,10 @@ fromUrl =
 routes : List (UP.Parser (Route -> a) a)
 routes =
     [ map Home top
-    , map (\name chara -> Character (InputCharacter name chara))
+    , map (\name gender -> Character (InputCharacter name gender))
         (s internal.paths.character </> string </> custom "GENDER" Gender.fromStr)
     , map (Character RandomCharacter) <| s internal.paths.character
-    , map CustomProbabilities <| s internal.paths.customProbabilities
+    , map Probabilities <| s internal.paths.probabilities
     ]
 
 
@@ -55,13 +55,13 @@ internal :
     { paths :
         { character : String
         , home : String
-        , customProbabilities : String
+        , probabilities : String
         }
     }
 internal =
     { paths =
         { character = "character"
         , home = "home"
-        , customProbabilities = "custom_probabilities"
+        , probabilities = "probabilities"
         }
     }

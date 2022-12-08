@@ -190,4 +190,4 @@ import Palette.Internal (mapSizePalette, mapColorPalette)
 
 Another viable module naming scheme is `Internal.My.Module`.
 
-Since the first option has a little readability overhead, and the second option introduces some project structural complexity, which option to use or whether to use one at all is on a case-by-case basis.
+Since the first option has a little readability overhead -- and note that record fields may not use each other. The second option introduces some project structural complexity. Which option to use or whether to use one at all is on a case-by-case basis.

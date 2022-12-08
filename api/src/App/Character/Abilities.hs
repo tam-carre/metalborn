@@ -92,8 +92,8 @@ mkMetalborn ps = do
 
 mkAbilitiesObtained ∷ AbilityProbabilities → Rand AbilitiesObtained
 mkAbilitiesObtained ps = do
-  spikeNum  ← exponentiallyRarer ps.spike
-  medallNum ← exponentiallyRarer ps.medall
+  spikeNum  ← exponentiallyRarer 4 ps.spike
+  medallNum ← exponentiallyRarer 4 ps.medall
   spikes    ← sequence $ rand <$ drop 1 [0..spikeNum]
   medallF   ← sequence $ rand <$ drop 1 [0..medallNum]
   grenade   ← randBool ps.grenade

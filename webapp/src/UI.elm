@@ -1,8 +1,9 @@
-module UI exposing (actionBtn, actionLink, actionLinkExternal, contentColumn, ending, load, md, mutedBtn, nameInput, narration, narrationColumn)
+module UI exposing (actionBtn, actionLink, actionLinkExternal, actionStyle, contentColumn, ending, load, mutedBtn, nameAndGenderInput, narration, narrationColumn, viewCharacter)
 
-import Anim exposing (transitionColorHover)
+import API
+import API.Gender as Gender
 import Ctx exposing (Ctx)
-import Element exposing (Element, centerX, centerY, fill, height, paragraph, text, width)
+import Element exposing (Element, centerX, centerY, column, fill, height, paragraph, text, width)
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input exposing (focusedOnLoad)
@@ -10,20 +11,12 @@ import Loading exposing (LoaderType(..), defaultConfig)
 import Markdown.Parser as MD
 import Markdown.Renderer as MDR
 import Maybe.Extra as Maybe
-import Palette exposing (bgColor, fontColor, padding, paddingTop, responsive, spacing, theme)
+import Palette exposing (bgColor, fontColor, fontSize, padding, paddingTop, paddingY, responsive, spacing, theme)
 import RemoteData exposing (WebData)
 import Result.Extra as Result
-import Route exposing (Route)
-
-
-md : String -> Element msg
-md input =
-    input
-        |> MD.parse
-        |> Result.mapError (List.map MD.deadEndToString >> String.join "\n")
-        |> Result.andThen (MDR.render MDR.defaultHtmlRenderer)
-        |> Result.unwrap Nothing List.head
-        |> Maybe.unwrap (text private.error) Element.html
+import Route exposing (CharacterOrigin(..), Route)
+import Sequential exposing (fadeIn, seq, seqAttrs, seqFadeIns)
+import Simple.Transition as Transition
 
 
 narration : String -> Element msg
@@ -33,42 +26,31 @@ narration parag =
 
 actionLink : String -> Route -> Element msg
 actionLink label route =
-    Element.link action
+    Element.link internal.action
         { url = Route.url route, label = text label }
 
 
 actionBtn : String -> msg -> Element msg
 actionBtn label msg =
-    Input.button action
+    Input.button internal.action
         { onPress = Just msg, label = text label }
 
 
 mutedBtn : String -> msg -> Element msg
 mutedBtn label msg =
     Input.button
-        (action ++ [ fontColor.mutedMuted, Element.mouseOver [ fontColor.mutedMuted ] ])
+        (internal.action ++ [ fontColor.mutedMuted, Element.mouseOver [ fontColor.mutedMuted ] ])
         { onPress = Just msg, label = text label }
 
 
 actionLinkExternal : String -> String -> Element msg
 actionLinkExternal label url =
-    Element.newTabLink action
+    Element.newTabLink internal.action
         { url = url, label = text label }
 
 
-nameInput : (String -> msg) -> Maybe String -> Element msg
-nameInput inputChangedMsg modelValue =
-    Input.text (focusedOnLoad :: action ++ private.discreetInput)
-        { onChange = inputChangedMsg
-        , text = Maybe.withDefault "" modelValue
-        , label = Input.labelHidden "Name"
-        , placeholder =
-            (Just << Input.placeholder [ fontColor.muted ] << text) "Search name"
-        }
-
-
-action : List (Element.Attribute msg)
-action =
+actionStyle : List (Element.Attribute msg)
+actionStyle =
     [ centerX
     , Font.bold
     , Font.center
@@ -77,10 +59,6 @@ action =
     , Border.width 0
     , Border.rounded 10
     , Element.focused [ Border.glow theme.transparent 0 ]
-    , Element.mouseOver [ fontColor.accent ]
-    , Element.mouseDown [ fontColor.accent ]
-    , Element.pointer
-    , transitionColorHover
     ]
 
 
@@ -94,17 +72,67 @@ narrationColumn ctx =
     (responsive ctx spacing).s
 
 
-load : (a -> Element msg) -> WebData a -> Element msg
-load viewLoaded webdata =
+viewCharacter : Ctx -> Element msg -> API.Character -> Element msg
+viewCharacter ctx links (API.Character name gender (API.Abilities _ _) descriptionBlocks) =
+    let
+        md =
+            MD.parse
+                >> Result.mapError (List.map MD.deadEndToString >> String.join "\n")
+                >> Result.andThen (MDR.render MDR.defaultHtmlRenderer)
+                >> Result.unwrap Nothing List.head
+                >> Maybe.unwrap (text internal.error) Element.html
+
+        -- Note: in a future iteration we might style each type of block differently
+        viewDescriptionBlock block =
+            let
+                content =
+                    case block of
+                        API.AllomancyBlock b ->
+                            b
+
+                        API.FeruchemyBlock b ->
+                            b
+
+                        API.TwinbornBlock b ->
+                            b
+
+                        API.SpikesBlock b ->
+                            b
+
+                        API.MedallionBlock b ->
+                            b
+
+                        API.GrenadeBlock b ->
+                            b
+            in
+            Element.paragraph [ fontColor.muted ] <| [ md content ]
+    in
+    seqFadeIns "CHARACTER" [ width fill, (responsive ctx paddingY).s ] <|
+        [ seqAttrs
+            [ (responsive ctx paddingY).s
+            , (responsive ctx fontSize).m
+            , fontColor.accentMuted
+            , centerX
+            ]
+            (text (name ++ " " ++ (Gender.info gender).symbol))
+        , (seq << column [ centerX, (responsive ctx paddingY).s ]) <|
+            List.map viewDescriptionBlock descriptionBlocks
+        , seqAttrs [ centerX ] links
+        ]
+
+
+load : WebData a -> (a -> Element msg) -> Element msg
+load webdata viewLoaded =
     case webdata of
         RemoteData.Failure _ ->
-            narration private.error
+            narration internal.error
 
         RemoteData.NotAsked ->
             Element.none
 
         RemoteData.Loading ->
-            private.loader
+            (Element.el [ centerX, centerY, width fill, height fill ] << Element.html) <|
+                Loading.render Sonar { defaultConfig | color = "#888" } Loading.On
 
         RemoteData.Success data ->
             viewLoaded data
@@ -125,21 +153,65 @@ ending ctx =
         )
 
 
-private :
-    { loader : Element a
-    , discreetInput : List (Element.Attr () msg)
-    , error : String
-    }
-private =
-    { loader =
-        (Element.el [ centerX, centerY, width fill, height fill ] << Element.html) <|
-            Loading.render Sonar { defaultConfig | color = "#888" } Loading.On
-    , discreetInput =
-        [ fontColor.fg
-        , padding.s
-        , Element.focused [ Border.glow theme.fgGlow 5 ]
-        , Element.mouseOver [ fontColor.fg ]
+nameAndGenderInput : Maybe (API.Gender -> msg) -> (String -> msg) -> Maybe API.Name -> Element msg
+nameAndGenderInput genderMsg nameInputMsg nameUserInput =
+    let
+        nameInput inputChangedMsg modelValue =
+            Input.text
+                (focusedOnLoad
+                    :: internal.action
+                    ++ [ fontColor.fg
+                       , padding.s
+                       , Element.focused [ Border.glow theme.fgGlow 5 ]
+                       , Element.mouseOver [ fontColor.fg ]
+                       ]
+                )
+                { onChange = inputChangedMsg
+                , text = Maybe.withDefault "" modelValue
+                , label = Input.labelHidden "Name"
+                , placeholder =
+                    (Just << Input.placeholder [ fontColor.muted ] << text) "Search name"
+                }
+
+        genderLink name gender =
+            case genderMsg of
+                Nothing ->
+                    actionLink (Gender.info gender).str <|
+                        Route.Character (InputCharacter name gender)
+
+                Just msg ->
+                    actionBtn (Gender.info gender).str (msg gender)
+
+        genderLinks =
+            case nameUserInput of
+                Just name ->
+                    (fadeIn [ centerX ] << Element.row [ spacing.s ]) <|
+                        List.map (genderLink name) [ API.Male, API.Female, API.Other ]
+
+                Nothing ->
+                    -- Keep the space to use up a layout row with the font's full height
+                    text " "
+    in
+    Element.column [ centerX, spacing.s ]
+        [ nameInput nameInputMsg nameUserInput
+        , genderLinks
         ]
-    , error =
-        " [An error occurred. Please contact m.tam.carre at gmail.com] "
+
+
+{-| Ensure low-level APIs remain private
+-}
+internal :
+    { error : String
+    , action : List (Element.Attribute msg)
+    }
+internal =
+    { error = " [An error occurred. Please contact m.tam.carre at gmail.com] "
+    , action =
+        actionStyle
+            ++ [ Element.mouseOver [ fontColor.accent ]
+               , Element.mouseDown [ fontColor.accent ]
+               , Element.pointer
+               , Element.htmlAttribute
+                    (Transition.all { duration = 500, options = [] } [ Transition.color ])
+               ]
     }

@@ -13,6 +13,7 @@ type alias ColorPalette fieldType =
     , bg : fieldType
     , fg : fieldType
     , fgGlow : fieldType
+    , fgGlowMuted : fieldType
     , muted : fieldType
     , mutedMuted : fieldType
     }
@@ -45,6 +46,7 @@ theme =
     , bg = rgb 0 0 0
     , fg = rgb 1 1 1
     , fgGlow = rgb 0.2 0.2 0.2
+    , fgGlowMuted = rgb 0.08 0.08 0.08
     , muted = rgb 0.7 0.7 0.7
     , mutedMuted = rgb 0.4 0.4 0.4
     }
@@ -127,6 +129,7 @@ internal =
             , bg = f palette.bg
             , fg = f palette.fg
             , fgGlow = f palette.fgGlow
+            , fgGlowMuted = f palette.fgGlowMuted
             , muted = f palette.muted
             , mutedMuted = f palette.mutedMuted
             }

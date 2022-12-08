@@ -14,6 +14,7 @@ import Html exposing (Html)
 import Page exposing (Page)
 import Page.Character as Character
 import Page.Home as Home
+import Page.Probabilities as Probabilities
 import Palette exposing (bgColor, fontColor, fontSize, padding, paddingY, responsive, spacing, theme)
 import Route exposing (CharacterOrigin(..))
 import Task
@@ -46,6 +47,7 @@ type alias Model =
 type PageModel
     = HomeModel Home.Model
     | CharacterModel Character.Model
+    | ProbabilitiesModel Probabilities.Model
 
 
 type alias Deps =
@@ -75,6 +77,7 @@ type Msg
 type PageMsg
     = HomeMsg Home.Msg
     | CharacterMsg Character.Msg
+    | ProbabilitiesMsg Probabilities.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -118,8 +121,8 @@ goToRouteFromUrl url model =
                 Route.Character RandomCharacter ->
                     scrollToTop << charaToMain (Character.page.init Nothing)
 
-                Route.CustomProbabilities ->
-                    Debug.todo "not created yet"
+                Route.Probabilities ->
+                    scrollToTop << probabsToMain (Probabilities.page.init ())
            )
 
 
@@ -149,6 +152,9 @@ updatePage pageMsg ({ pageModel } as model) =
         ( CharacterMsg charaMsg, CharacterModel charaModel ) ->
             charaToMain (Character.page.update model.ctx charaMsg charaModel)
 
+        ( ProbabilitiesMsg probabMsg, ProbabilitiesModel probabModel ) ->
+            probabsToMain (Probabilities.page.update model.ctx probabMsg probabModel)
+
         _ ->
             noCmd
     )
@@ -163,6 +169,11 @@ homeToMain =
 charaToMain : ( Character.Model, Cmd Character.Msg ) -> Model -> ( Model, Cmd Msg )
 charaToMain =
     toMain CharacterModel CharacterMsg
+
+
+probabsToMain : ( Probabilities.Model, Cmd Probabilities.Msg ) -> Model -> ( Model, Cmd Msg )
+probabsToMain =
+    toMain ProbabilitiesModel ProbabilitiesMsg
 
 
 toMain : (pageModel -> PageModel) -> (pageMsg -> PageMsg) -> ( pageModel, Cmd pageMsg ) -> Model -> ( Model, Cmd Msg )
@@ -185,8 +196,11 @@ view ({ ctx } as model) =
         CharacterModel mdl ->
             render ctx CharacterMsg Character.page mdl
 
+        ProbabilitiesModel mdl ->
+            render ctx ProbabilitiesMsg Probabilities.page mdl
 
-render : Ctx -> (msg -> PageMsg) -> Page model msg deps -> model -> Document Msg
+
+render : Ctx -> (msg -> PageMsg) -> Page deps model msg -> model -> Document Msg
 render ctx toMainMsg page mdl =
     { title = page.title mdl
     , body = [ Html.map (PageMsg << toMainMsg) << siteLayout ctx <| page.view ctx mdl ]

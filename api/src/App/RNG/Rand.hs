@@ -54,10 +54,11 @@ coinflip ∷ a → a → Rand a
 coinflip a b = bool a b <$> randBool balanced
 
 -- e.g. if I have 0.05 likelihood of owning a single spike, how many spikes do I have?
-exponentiallyRarer ∷ Probability → Rand Int
-exponentiallyRarer prob = randBool prob ≫= \case
+exponentiallyRarer ∷ Int → Probability → Rand Int
+exponentiallyRarer 0 _          = pure 0
+exponentiallyRarer hiBound prob = randBool prob ≫= \case
   False → pure 0
-  True  → (1 +) <$> exponentiallyRarer prob
+  True  → (1 +) <$> exponentiallyRarer (hiBound - 1) prob
 
 randomlySplit ∷ [a] → Rand ([a], [a])
 randomlySplit xs = splitAt <$> randR (0, length xs) ?? xs
