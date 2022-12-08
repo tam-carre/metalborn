@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Accessors exposing (over)
 import Browser exposing (Document)
-import Browser.Dom exposing (Viewport, getViewport, setViewport)
+import Browser.Dom exposing (setViewport)
 import Browser.Events
 import Browser.Navigation as Nav
 import Ctx exposing (Ctx)
