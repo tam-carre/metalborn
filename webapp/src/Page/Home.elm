@@ -14,7 +14,7 @@ import UI
 import Utils exposing (noCmd)
 
 
-page : Page Model Msg ()
+page : Page () Model Msg
 page =
     { title = title
     , init = init

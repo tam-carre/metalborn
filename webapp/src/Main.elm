@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Accessors exposing (over)
 import Browser exposing (Document)
-import Browser.Dom exposing (Viewport, getViewport, setViewport)
+import Browser.Dom exposing (setViewport)
 import Browser.Events
 import Browser.Navigation as Nav
 import Ctx exposing (Ctx)
@@ -21,7 +21,7 @@ import Url exposing (Url)
 import Utils exposing (addCmd, noCmd)
 
 
-main : Program () Model Msg
+main : Program Deps Model Msg
 main =
     Browser.application
         { init = init
@@ -48,13 +48,16 @@ type PageModel
     | CharacterModel Character.Model
 
 
-init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init _ url nkey =
-    { ctx = Ctx.init nkey url
+type alias Deps =
+    { width : Int, height : Int }
+
+
+init : Deps -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init viewport url nkey =
+    { ctx = Ctx.init nkey url viewport
     , pageModel = (HomeModel << Tuple.first) <| Home.page.init ()
     }
         |> goToRouteFromUrl url
-        |> addCmd (Task.perform ViewportQueried getViewport)
 
 
 
@@ -64,9 +67,8 @@ init _ url nkey =
 type Msg
     = LinkClicked Browser.UrlRequest
     | UrlChanged Url
-    | ViewportReset
+    | ScrollToTopRequired
     | ViewportResized Int Int
-    | ViewportQueried Viewport
     | PageMsg PageMsg
 
 
@@ -84,24 +86,21 @@ update msg =
         LinkClicked urlRequest ->
             loadPage urlRequest
 
-        ViewportReset ->
-            noCmd
-
         ViewportResized w h ->
             updateDevice w h
 
-        ViewportQueried { viewport } ->
-            updateDevice (round viewport.width) (round viewport.height)
-
         PageMsg pageMsg ->
             updatePage pageMsg
+
+        ScrollToTopRequired ->
+            noCmd
 
 
 goToRouteFromUrl : Url -> Model -> ( Model, Cmd Msg )
 goToRouteFromUrl url model =
     let
         scrollToTop =
-            (addCmd << Task.perform (always ViewportReset)) <| setViewport 0 0
+            (addCmd << Task.perform (always ScrollToTopRequired)) <| setViewport 0 0
     in
     model
         |> over F.ctx (Ctx.updateRoute url)

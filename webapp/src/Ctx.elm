@@ -18,10 +18,10 @@ type alias Internal =
     }
 
 
-init : Nav.Key -> Url -> Ctx
-init nkey url =
+init : Nav.Key -> Url -> { width : Int, height : Int } -> Ctx
+init nkey url viewport =
     Ctx
-        { device = { class = Desktop, orientation = Landscape }
+        { device = classifyDevice viewport
         , nkey = nkey
         , routeHistory = []
         , route = Route.fromUrl url

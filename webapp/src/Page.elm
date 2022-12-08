@@ -4,7 +4,7 @@ import Ctx exposing (Ctx)
 import Element exposing (Element)
 
 
-type alias Page model msg deps =
+type alias Page deps model msg =
     { title : model -> String
     , init : deps -> ( model, Cmd msg )
     , update : Ctx -> msg -> model -> ( model, Cmd msg )
