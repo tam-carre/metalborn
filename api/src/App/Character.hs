@@ -9,6 +9,7 @@ import App.Gender                (Gender (..))
 import Data.Default              (Default (..))
 import Servant.Docs              (ToSample (..), singleSample)
 import Servant.Elm               (defaultOptions, deriveBoth)
+import System.Random             (StdGen)
 
 ----------------------------------------------------------------------------------------------------
 
@@ -19,11 +20,11 @@ data Character
 deriveBoth defaultOptions ''Character
 
 instance ToSample Character where
-  toSamples _ = singleSample $ mkCharacter (Name "Kaladin") Male def
+  toSamples _ = singleSample $ mkCharacter (Name "Kaladin") Male def Nothing
 
-mkCharacter ∷ Name → Gender → AbilityProbabilities → Character
-mkCharacter name gender probabs =
-  let abilitiesGen      = seed name gender
+mkCharacter ∷ Name → Gender → AbilityProbabilities → Maybe StdGen → Character
+mkCharacter name gender probabs maybeGen =
+  let abilitiesGen      = fromMaybe (seed name gender) maybeGen
       abilities         = evalState (mkAbilities probabs) abilitiesGen
       descriptionBlocks = describeAbilities name gender abilities
   in Character name gender abilities descriptionBlocks

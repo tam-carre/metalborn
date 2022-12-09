@@ -11,6 +11,7 @@ import Data.Default             (Default (..))
 import Network.Wai.Handler.Warp (Port, run)
 import Servant                  (JSON, Post, ReqBody, err400, err500, hoistServer, serve,
                                  type (:<|>) (..), type (:>))
+import System.Random            (initStdGen)
 
 ----------------------------------------------------------------------------------------------------
 
@@ -37,18 +38,19 @@ runServer port =
     Left BadRequestError → throwError err400
     Left otherErr        → print otherErr ≫ throwError err500
 
-  server = getCharacter :<|> postCharacter where
+  server = getCharacter :<|> getCharacterCustomProbabs where
     getCharacter (maybeNameTxt, maybeGender) = do
       name   ← parseIfPresentElseRand maybeNameTxt
       gender ← toRandIO maybeGender
       DB.getCharacter name gender ≫= \case
         Just character → pure character
         Nothing → do
-          let newCharacter = mkCharacter name gender def
+          let newCharacter = mkCharacter name gender def Nothing
           DB.createCharacter newCharacter
           pure newCharacter
 
-    postCharacter (maybeNameTxt, maybeGender, probabs) = do
+    getCharacterCustomProbabs (maybeNameTxt, maybeGender, probabs) = do
       name   ← parseIfPresentElseRand maybeNameTxt
       gender ← toRandIO maybeGender
-      pure $ mkCharacter name gender probabs
+      ioGen  ← initStdGen
+      pure $ mkCharacter name gender probabs (Just ioGen)

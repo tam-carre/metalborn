@@ -134,7 +134,7 @@ narration : Ctx -> Internal -> List (Sequential msg)
 narration ctx model =
     if model.clickedTryAgain then
         [ (seq << fadeIn [] << UI.narration)
-            "Try different settings, name or gender in order to get different results."
+            "Not satisfied with the results of your tampering, you decide to try again."
         ]
 
     else
