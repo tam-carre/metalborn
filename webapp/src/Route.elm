@@ -44,7 +44,13 @@ fromUrl =
 routes : List (UP.Parser (Route -> a) a)
 routes =
     [ map Home top
-    , map (\name gender -> Character (InputCharacter name gender))
+    , map
+        (\name gender ->
+            name
+                |> Url.percentDecode
+                |> Maybe.withDefault (String.replace "%20" " " name)
+                |> (\decodedName -> Character (InputCharacter decodedName gender))
+        )
         (s internal.paths.character </> string </> custom "GENDER" Gender.fromStr)
     , map (Character RandomCharacter) <| s internal.paths.character
     , map Probabilities <| s internal.paths.probabilities
