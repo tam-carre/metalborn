@@ -270,7 +270,7 @@ comboAnecdote mist ferr = case (mist, ferr) of
   -- (I changed up some of them if I didn't understand them or if they seemed to
   -- assume non-canon properties of Identity, Fortune, etc...)
   (Tineye, Windwhisperer)    → Just "Eagle Eyes are known to be frighteningly perceptive."
-  (Tineye, Steelrunner)      → Just "No one can escate a Catcher's sight or speed."
+  (Tineye, Steelrunner)      → Just "No one can escape a Catcher's sight or speed."
   (Tineye, Archivist)        → Just "Monitors are detail-oriented and meticulous."
   (Tineye, Sparker)          → Just "Quickwits can adjust plans at lightning speed."
   (Tineye, Spinner)          → Just "Keeneyes cannot be cheated out of a victory at cards."
@@ -284,7 +284,7 @@ comboAnecdote mist ferr = case (mist, ferr) of
   (Lurcher, Skimmer)         → Just "Deaders are notorious for smashing themselves flat."
   (Lurcher, Steelrunner)     → Just "Guardians are tremendously popular bodyguards."
   (Lurcher, Sparker)         → Just "Navigators are nimble and quick-witted Ironswingers."
-  (Coinshot, Windwhisperer)  → Just "Sharpshooters are crach shots and deadly gunfighters."
+  (Coinshot, Windwhisperer)  → Just "Sharpshooters are crack shots and deadly gunfighters."
   (Coinshot, Skimmer)        → Just "Crashers are exceptionally destructive and dangerous."
   (Coinshot, Steelrunner)    → Just "Swifts are fast and destructive, often criminals."
   (Coinshot, Trueself)       → Just "Shrouds are known to be nameless assassins."
